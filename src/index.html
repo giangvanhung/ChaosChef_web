@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chaos Chef 🍳 — Hợp tác, hoảng loạn, cười tím mặt</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<style href="./style.css"></style>
+</head>
+<body>
+
+<h1 class="title">CHAOS CHEF 🍳</h1>
+<div class="tagline">"Hợp tác, hoảng loạn, cười tím mặt."</div>
+
+<!-- ============ MENU ============ -->
+<div id="menu" class="screen on">
+  <div class="cardrow">
+    <div class="mcard">
+      <h3>🛋️ Chung 1 máy</h3>
+      <p>2–4 người ngồi cùng máy, chia nhau bàn phím. Tụ tập là chiến luôn!</p>
+      <div class="pillrow" id="localCount">
+        <div class="pill" data-n="1">1</div>
+        <div class="pill sel" data-n="2">2</div>
+        <div class="pill" data-n="3">3</div>
+        <div class="pill" data-n="4">4</div>
+      </div>
+      <button onclick="startLocal()">Vào bếp ngay!</button>
+    </div>
+    <div class="mcard">
+      <h3>🌐 Tạo phòng online</h3>
+      <p>Tạo phòng, gửi mã 4 ký tự cho bạn bè qua Discord/Zalo là chơi được từ xa.</p>
+      <input type="text" class="name" id="hostName" placeholder="Tên của bạn" maxlength="10">
+      <button class="alt" onclick="hostRoom()">Tạo phòng</button>
+      <div class="err" id="hostErr"></div>
+    </div>
+    <div class="mcard">
+      <h3>🔑 Vào phòng bạn bè</h3>
+      <p>Nhập mã phòng mà chủ phòng gửi cho bạn.</p>
+      <input type="text" class="name" id="joinName" placeholder="Tên của bạn" maxlength="10">
+      <input type="text" id="joinCode" placeholder="MÃ PHÒNG" maxlength="4">
+      <button class="alt" onclick="joinRoom()">Vào phòng</button>
+      <div class="err" id="joinErr"></div>
+    </div>
+  </div>
+
+  <div class="howto">
+    <b>🎮 Cách chơi:</b> Cùng nhau nấu món theo đơn hàng trước khi hết giờ. Lấy nguyên liệu ở <b>📦 thùng</b>,
+    đem <b>🔪 chặt</b> hoặc <b>🍳 nấu</b> cho chín, rồi mang ra <b>🛎️ quầy giao</b>. Đủ nguyên liệu của một đơn = tiền về!
+    Để đồ trên bếp quá lâu = <b>🔥 CHÁY BẾP</b> (lấy 💧 ở vòi nước để dập). Thỉnh thoảng sẽ có
+    <b>⚡ cắt điện</b>, <b>👑 khách VIP</b>, <b>😤 đồng đội đình công</b>... chúc may mắn!<br><br>
+    <b>⌨️ Phím (chung máy):</b>
+    P1 <span class="kbd">W A S D</span>+<span class="kbd">E</span> &nbsp;|&nbsp;
+    P2 <span class="kbd">← ↑ ↓ →</span>+<span class="kbd">Enter</span> &nbsp;|&nbsp;
+    P3 <span class="kbd">I J K L</span>+<span class="kbd">O</span> &nbsp;|&nbsp;
+    P4 <span class="kbd">T F G H</span>+<span class="kbd">Y</span><br>
+    <b>⌨️ Online:</b> <span class="kbd">W A S D</span> hoặc <span class="kbd">mũi tên</span>, tương tác bằng <span class="kbd">E</span> / <span class="kbd">Space</span>.<br>
+    <b>📹 Quay clip:</b> bấm nút <b>⏺ Quay clip</b> góc phải khi chơi — file video tự tải về, đăng TikTok liền tay!
+  </div>
+</div>
+
+<!-- ============ LOBBY ============ -->
+<div id="lobby" class="screen">
+  <h2 id="lobbyTitle">Phòng chờ</h2>
+  <div id="lobbyCode">----</div>
+  <div id="lobbyHintText" style="color:#b8b2c8;">Gửi mã này cho bạn bè để họ vào phòng (tối đa 4 người)</div>
+  <div class="plist" id="plist"></div>
+  <div class="btnrow">
+    <button id="startBtn" onclick="hostStartGame(1)">🔥 Bắt đầu (Level 1)</button>
+    <button class="ghost" onclick="leaveToMenu()">Rời phòng</button>
+  </div>
+  <div class="waiting" id="lobbyWait"></div>
+</div>
+
+<!-- ============ GAME ============ -->
+<div id="gamewrap">
+  <button id="recbtn" class="small ghost" onclick="toggleRec()">⏺ Quay clip</button>
+  <canvas id="cv" width="832" height="662"></canvas>
+  <div id="hint">Di chuyển tới gần một trạm rồi bấm phím tương tác. Đưa nguyên liệu ĐÃ CHÍN/ĐÃ CHẶT ra quầy 🛎️!</div>
+</div>
+
+<!-- ============ END ============ -->
+<div id="endscreen" class="screen">
+  <h2 id="endTitle">Hết giờ!</h2>
+  <div class="stars" id="endStars"></div>
+  <div class="stat" id="endMoney"></div>
+  <div id="endStats"></div>
+  <div class="btnrow" id="endBtns"></div>
+  <div class="waiting" id="endWait"></div>
+</div>
+
+<script src="./script.js"></script>
+</body>
+</html>
