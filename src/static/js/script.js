@@ -457,7 +457,7 @@ function playLevel(idx){
   if (MODE === 'host') players = lobbyPlayers.map((p,i)=>newPlayer(i, p.name));
   else players = Array.from({length: localN}, (_,i)=>newPlayer(i));
   G = newGame(idx, players);
-  prevView = null;
+  prevView = null; latestView = null; simT = performance.now();
   if (MODE === 'host') broadcast({t:'start', level: idx});
   show('gamewrap');
 }
@@ -558,7 +558,7 @@ function leaveToMenu(){
   try{ if (peer) peer.destroy(); }catch(e){}
   if (rec){ try{ rec.stop(); }catch(e){} }
   peer=null; conns=[]; clientConn=null; lobbyPlayers=[]; lobbyRemote=[];
-  G=null; MODE=null; CV=null; CVdisp=null; prevView=null; roomCode='';
+  G=null; MODE=null; CV=null; CVdisp=null; prevView=null; latestView=null; roomCode='';
   show('menu');
 }
 
@@ -838,23 +838,31 @@ function toggleRec(){
 }
 
 // ---------- Vòng lặp chính ----------
-let lastT = performance.now(), sendAcc = 0;
-function loop(now){
-  requestAnimationFrame(loop);
-  const dt = Math.min(0.05,(now-lastT)/1000); lastT = now;
+// LƯU Ý: mô phỏng chạy bằng setInterval chứ KHÔNG dùng rAF, vì trình duyệt
+// tạm dừng requestAnimationFrame khi tab bị ẩn → nếu dùng rAF, chủ phòng mở
+// 2 tab test online sẽ bị: chuyển sang tab kia là tab host đứng hình,
+// người chơi 2 gửi input mà không ai xử lý. Tab có WebRTC không bị throttle.
+let latestView = null, simT = performance.now(), sendAcc = 0;
+setInterval(() => {
+  if (!((MODE==='local' || MODE==='host') && G && !G.over)){ simT = performance.now(); return; }
+  const now = performance.now();
+  const dt = Math.min(0.1,(now-simT)/1000); simT = now;
+  if (MODE==='host') G.players[0].inp = readMap(MERGED);
+  else for (let i=0;i<G.players.length;i++) G.players[i].inp = readMap(LOCAL_KEYS[i]);
+  step(dt);
+  if (!G) return;                        // phòng khi finishLevel dọn state
+  const v = makeView();
+  playDiffs(prevView, v); prevView = v; latestView = v;
+  if (MODE==='host'){
+    sendAcc += dt;
+    if (sendAcc >= 0.07){ sendAcc = 0; broadcast({t:'view', v}); }
+  }
+}, 33);
 
-  if ((MODE==='local' || MODE==='host') && G && !G.over){
-    if (MODE==='host') G.players[0].inp = readMap(MERGED);
-    else for (let i=0;i<G.players.length;i++) G.players[i].inp = readMap(LOCAL_KEYS[i]);
-    step(dt);
-    if (!G) return;                      // phòng khi finishLevel dọn state
-    const v = makeView();
-    playDiffs(prevView, v); prevView = v;
-    draw(v);
-    if (MODE==='host'){
-      sendAcc += dt;
-      if (sendAcc >= 0.075){ sendAcc = 0; broadcast({t:'view', v}); }
-    }
+function loop(){
+  requestAnimationFrame(loop);          // rAF giờ CHỈ vẽ, không mô phỏng
+  if ((MODE==='local' || MODE==='host') && G && latestView){
+    draw(latestView);
   } else if (MODE==='client' && CV){
     const old = CVdisp;
     CVdisp = JSON.parse(JSON.stringify(CV));
