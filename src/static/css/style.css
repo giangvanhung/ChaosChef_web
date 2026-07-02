@@ -68,6 +68,9 @@
   #recbtn {
     position:absolute; top:-46px; right:0;
   }
+  #leavebtn {
+    position:absolute; top:-46px; left:0;
+  }
   #hint { color:#8f89a3; font-size:12.5px; margin-top:8px; text-align:center; }
   #endscreen .stars { font-size:56px; margin:6px 0; }
   #endscreen .stat { color:#cfc9de; font-size:15px; margin:3px 0; }

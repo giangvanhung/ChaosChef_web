@@ -562,6 +562,15 @@ function leaveToMenu(){
   show('menu');
 }
 
+// Nút "Rời phòng" khi đang chơi
+function leaveGame(){
+  if (MODE === 'host'){
+    if (!confirm('Bạn là CHỦ PHÒNG — thoát là giải tán phòng cho tất cả mọi người. Chắc chưa?')) return;
+  } else if (!confirm('Thoát ván đang chơi?')) return;
+  // client thoát: đóng kết nối → host tự xóa nhân vật khỏi trận (đã xử lý ở conn.on close)
+  leaveToMenu();
+}
+
 // ---------- Lobby / End screens ----------
 function showLobby(isHost){
   show('lobby');
