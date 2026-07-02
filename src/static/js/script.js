@@ -130,6 +130,8 @@ function newPlayer(slot, name){
     x: TILE*2 + slot*TILE*2.2, y: TILE*3.5,
     carry:null,               // {ing, st:'raw'|'ready'} | {bucket:true}
     chopEnd:0, stunEnd:0,
+    // chỉ số cá nhân cho bảng xếp hạng cuối ván
+    ps:{ served:0, cooked:0, chopped:0, trashed:0, fires:0, douses:0, switches:0, strikes:0 },
     inp:{u:false,d:false,l:false,r:false,a:false}, prevA:false,
   };
 }
@@ -139,7 +141,7 @@ function newGame(levelIdx, players){
   return {
     levelIdx, L, time:0, money:0, over:false,
     players,
-    stoves: STOVE_IDX.map(()=>({ item:null, st:null, t:0, fire:false })), // st:'cook'|'ready'
+    stoves: STOVE_IDX.map(()=>({ item:null, st:null, t:0, fire:false, by:null })), // by = slot người đặt món (để quy tội cháy bếp)
     orders: [],
     nextOrderAt: 2,
     nextEventAt: rand(L.eventEvery[0], L.eventEvery[1]),
@@ -208,7 +210,7 @@ function triggerEvent(){
     banner('👑 KHÁCH VIP! Tiền x2 nhưng chỉ chờ 22 giây!');
   } else if (ev === 'strike'){
     const p = pick(G.players.filter(p=>p.stunEnd<=G.time));
-    p.stunEnd = G.time + 8; G.stats.strikes++;
+    p.stunEnd = G.time + 8; G.stats.strikes++; p.ps.strikes++;
     banner(`😤 ${p.name} ĐÌNH CÔNG 8 GIÂY! Cover gấp!`);
   }
 }
@@ -246,14 +248,14 @@ function interact(p){
       const st = G.stoves[STOVE_IDX.indexOf(STATIONS.indexOf(s))];
       if (st.fire){
         if (p.carry && p.carry.bucket){
-          st.fire=false; p.carry=null;
+          st.fire=false; p.carry=null; p.ps.douses++;
           toast(`💧 ${p.name} dập lửa thành công!`, '#7dff9b');
         } else toast('Cần 💧! Lấy nước ở vòi 🚿!', '#ff7676');
       } else if (st.st==='ready' && !p.carry){
         p.carry = { ing:st.item, st:'ready' };
-        st.item=null; st.st=null;
+        st.item=null; st.st=null; st.by=null; p.ps.cooked++;
       } else if (!st.item && p.carry && p.carry.ing && p.carry.st==='raw' && ING[p.carry.ing].prep==='cook'){
-        st.item=p.carry.ing; st.st='cook'; st.t=G.time; p.carry=null;
+        st.item=p.carry.ing; st.st='cook'; st.t=G.time; st.by=p.slot; p.carry=null;
       } else if (!st.item && p.carry && p.carry.ing && ING[p.carry.ing].prep==='chop'){
         toast(`${ING[p.carry.ing].name} phải CHẶT chứ không nấu! 🤦`, '#ffd54a');
       } else if (st.st==='cook'){
@@ -268,14 +270,14 @@ function interact(p){
 
     case 'trash':
       if (p.carry){
-        p.carry=null; G.stats.trashed++;
+        p.carry=null; G.stats.trashed++; p.ps.trashed++;
         toast(`🗑️ ${p.name} vứt đồ... lãng phí ghê`, '#b8b2c8');
       }
       break;
 
     case 'switch':
       if (G.blackoutEnd > G.time){
-        G.blackoutEnd = 0;
+        G.blackoutEnd = 0; p.ps.switches++;
         toast(`💡 ${p.name} bật lại đèn! Cứu tinh!`, '#7dff9b');
       }
       break;
@@ -295,7 +297,7 @@ function interact(p){
         break;
       }
       need.ings.find(i => !i.done && i.ing === p.carry.ing).done = true;
-      p.carry = null;
+      p.carry = null; p.ps.served++;
       if (need.ings.every(i => i.done)) completeOrder(need);
       break;
     }
@@ -312,7 +314,7 @@ function step(dt){
     // chặt xong?
     if (p.chopEnd && G.time >= p.chopEnd){
       p.chopEnd=0;
-      if (p.carry && p.carry.ing) p.carry.st='ready';
+      if (p.carry && p.carry.ing){ p.carry.st='ready'; p.ps.chopped++; }
     }
     const canMove = p.stunEnd <= G.time && !(p.chopEnd > G.time);
     if (canMove){
@@ -333,7 +335,10 @@ function step(dt){
     if (st.st==='cook' && G.time-st.t >= COOK_TIME){ st.st='ready'; st.t=G.time; }
     else if (st.st==='ready' && G.time-st.t >= BURN_AFTER){
       st.fire=true; st.item=null; st.st=null; G.stats.fires++;
-      banner('🔥 ĐỂ QUÊN ĐỒ TRÊN BẾP — CHÁY RỒI!!!');
+      const culprit = G.players.find(q=>q.slot===st.by);   // quy tội người đặt món rồi bỏ quên
+      if (culprit){ culprit.ps.fires++; banner(`🔥 ${culprit.name} ĐỂ QUÊN ĐỒ TRÊN BẾP — CHÁY RỒI!!!`); }
+      else banner('🔥 ĐỂ QUÊN ĐỒ TRÊN BẾP — CHÁY RỒI!!!');
+      st.by=null;
     }
   }
 
@@ -398,10 +403,33 @@ function calcStars(){
   return 0;
 }
 
+// ---------- Xếp hạng cá nhân cuối ván ----------
+function pscore(p){
+  const s = p.ps;
+  return s.served*3 + s.cooked*2 + s.chopped*2 + s.douses*4 + s.switches*3
+       - s.trashed*2 - s.fires*4;
+}
+function titleFor(p, all){
+  const s = p.ps;
+  const isMax = k => s[k] > 0 && s[k] === Math.max(...all.map(q=>q.ps[k]));
+  if (isMax('fires'))    return '🔥 Thần Hỏa Hoạn';
+  if (isMax('trashed'))  return '🗑️ Vua Lãng Phí';
+  if (isMax('douses'))   return '🧯 Lính Cứu Hỏa';
+  if (isMax('strikes'))  return '😤 Chúa Đình Công';
+  if (isMax('served'))   return '🛎️ Shipper Chân Chính';
+  if (isMax('cooked'))   return '🍳 Vua Đứng Bếp';
+  if (isMax('chopped'))  return '🔪 Đồ Tể Rau Củ';
+  if (isMax('switches')) return '💡 Người Giữ Ánh Sáng';
+  return '🍜 Nhân Viên Gương Mẫu';
+}
 function makeEndData(){
+  const ranked = G.players
+    .map(p => ({ name:p.name, face:p.face, color:p.color, ps:p.ps,
+                 score:pscore(p), title:titleFor(p, G.players) }))
+    .sort((a,b)=>b.score-a.score);
   return {
     stars: calcStars(), money: G.money, target: G.L.target,
-    levelIdx: G.levelIdx, stats: G.stats,
+    levelIdx: G.levelIdx, stats: G.stats, players: ranked,
   };
 }
 
@@ -607,6 +635,18 @@ function showEnd(e){
   el('endStats').innerHTML =
     `<div class="stat">✅ ${s.done} đơn xong · ❌ ${s.failed} đơn hỏng · 🗑️ ${s.trashed} món bị vứt</div>`+
     `<div class="stat">🔥 ${s.fires} vụ cháy bếp · ⚡ ${s.blackouts} lần cắt điện · 😤 ${s.strikes} vụ đình công</div>`;
+  // bảng xếp hạng "ai gánh, ai phá"
+  const medals = ['🥇','🥈','🥉','🍀'];
+  el('endRank').innerHTML = (e.players||[]).map((p,i)=>{
+    const s=p.ps;
+    return `<div class="rankrow${i===0?' top':''}${i===e.players.length-1&&e.players.length>1?' bot':''}">`+
+      `<span class="rmedal">${medals[i]||''}</span><span class="rface">${p.face}</span>`+
+      `<span class="rname" style="color:${p.color}">${esc(p.name)}</span>`+
+      `<span class="rtitle">${p.title}</span>`+
+      `<span class="rstats">🛎️${s.served} 🍳${s.cooked} 🔪${s.chopped} 🗑️${s.trashed} 🔥${s.fires}</span>`+
+      `<span class="rscore">${p.score}đ</span></div>`;
+  }).join('');
+  if (e.players && e.players.length>1) el('endRank').lastElementChild.querySelector('.rmedal').textContent='🐢';
   const b = el('endBtns'); b.innerHTML=''; el('endWait').textContent='';
   if (MODE !== 'client'){
     if (e.stars>0 && e.levelIdx < LEVELS.length-1)
