@@ -72,11 +72,14 @@ const CHARS = [
 
 // ---------- Phím local (4 người 1 bàn phím) ----------
 const LOCAL_KEYS = [
-  { up:'KeyW',    left:'KeyA',      down:'KeyS',      right:'KeyD',       act:'KeyE'  },
-  { up:'ArrowUp', left:'ArrowLeft', down:'ArrowDown', right:'ArrowRight', act:'Enter' },
-  { up:'KeyI',    left:'KeyJ',      down:'KeyK',      right:'KeyL',       act:'KeyO'  },
-  { up:'KeyT',    left:'KeyF',      down:'KeyG',      right:'KeyH',       act:'KeyY'  },
+  { up:'KeyW',    left:'KeyA',      down:'KeyS',      right:'KeyD',       act:'KeyE',  thr:'KeyQ'   },
+  { up:'ArrowUp', left:'ArrowLeft', down:'ArrowDown', right:'ArrowRight', act:'Enter', thr:'Slash'  },
+  { up:'KeyI',    left:'KeyJ',      down:'KeyK',      right:'KeyL',       act:'KeyO',  thr:'KeyU'   },
+  { up:'KeyT',    left:'KeyF',      down:'KeyG',      right:'KeyH',       act:'KeyY',  thr:'KeyR'   },
 ];
+
+// 💬 Emote nhanh (phím 1–4)
+const EMOTES = ['NHANH LÊN!! 😡', 'AI CẦM CÀ CHUA?! 🍅', 'LỖI TẠI MÀY 👉', 'Xin lỗi nha 🥺'];
 
 // ---------- Tiện ích ----------
 const rand  = (a,b)=> a + Math.random()*(b-a);
@@ -129,10 +132,11 @@ function newPlayer(slot, name){
     slot, name: name || c.name, face:c.face, color:c.color,
     x: TILE*2 + slot*TILE*2.2, y: TILE*3.5,
     carry:null,               // {ing, st:'raw'|'ready'} | {bucket:true}
-    chopEnd:0, stunEnd:0,
+    chopEnd:0, stunEnd:0, confuseEnd:0, phone:0, emote:null,
+    dir:{x:0,y:1}, vx:0, vy:0,
     // chỉ số cá nhân cho bảng xếp hạng cuối ván
-    ps:{ served:0, cooked:0, chopped:0, trashed:0, fires:0, douses:0, switches:0, strikes:0 },
-    inp:{u:false,d:false,l:false,r:false,a:false}, prevA:false,
+    ps:{ served:0, cooked:0, chopped:0, trashed:0, fires:0, douses:0, switches:0, strikes:0, throws:0, bonks:0 },
+    inp:{u:false,d:false,l:false,r:false,a:false,t:false}, prevA:false, prevT:false,
   };
 }
 
@@ -143,6 +147,9 @@ function newGame(levelIdx, players){
     players,
     stoves: STOVE_IDX.map(()=>({ item:null, st:null, t:0, fire:false, by:null })), // by = slot người đặt món (để quy tội cháy bếp)
     orders: [],
+    projs: [],                // đồ đang bay (ném nhau)
+    rat: null,                // 🐀 chuột cướp đồ
+    slipEnd: 0,               // 🧼 sàn trơn
     nextOrderAt: 2,
     nextEventAt: rand(L.eventEvery[0], L.eventEvery[1]),
     blackoutEnd: 0,
@@ -196,6 +203,11 @@ function triggerEvent(){
   if (G.stoves.some(s=>!s.fire)) opts.push('fire');
   if (G.orders.length <= G.L.maxOrders) opts.push('vip');
   if (G.players.length >= 2 && G.players.some(p=>p.stunEnd<=G.time)) opts.push('strike');
+  if (G.players.some(p=>p.confuseEnd<=G.time)) opts.push('confuse');
+  if (G.slipEnd <= G.time) opts.push('slip');
+  if (!G.rat && G.players.some(p=>p.carry && p.carry.ing)) opts.push('rat');
+  if (G.players.some(p=>p.phone<=0 && p.stunEnd<=G.time)) opts.push('phone');
+  if (G.players.length >= 2) opts.push('swap');
   if (!opts.length) return;
   const ev = pick(opts);
   if (ev === 'blackout'){
@@ -212,6 +224,29 @@ function triggerEvent(){
     const p = pick(G.players.filter(p=>p.stunEnd<=G.time));
     p.stunEnd = G.time + 8; G.stats.strikes++; p.ps.strikes++;
     banner(`😤 ${p.name} ĐÌNH CÔNG 8 GIÂY! Cover gấp!`);
+  } else if (ev === 'confuse'){
+    const p = pick(G.players.filter(p=>p.confuseEnd<=G.time));
+    p.confuseEnd = G.time + 6;
+    banner(`🌀 ${p.name} BỊ LÚ — PHÍM ĐẢO NGƯỢC 6 GIÂY!`);
+  } else if (ev === 'slip'){
+    G.slipEnd = G.time + 10;
+    banner('🧼 SÀN MỚI LAU — TRƠN NHƯ BÔI MỠ!');
+  } else if (ev === 'rat'){
+    const victim = pick(G.players.filter(p=>p.carry && p.carry.ing));
+    G.rat = { x:victim.x, y:victim.y,
+              tx:rand(TILE+20, W-TILE-20), ty:rand(TILE+20, GRID_H*TILE-TILE-20),
+              wp:1.5, item:victim.carry, until:G.time+18 };
+    victim.carry = null;
+    banner(`🐀 CHUỘT CƯỚP ${ING[G.rat.item.ing].name.toUpperCase()} CỦA ${victim.name.toUpperCase()}! ĐUỔI THEO!`);
+  } else if (ev === 'phone'){
+    const p = pick(G.players.filter(p=>p.phone<=0 && p.stunEnd<=G.time));
+    p.phone = 3;
+    banner(`📞 SẾP GỌI ${p.name.toUpperCase()}!!! Bấm tương tác 3 lần để dập máy!`);
+  } else if (ev === 'swap'){
+    const sh = [...G.players].sort(()=>Math.random()-0.5);
+    const a=sh[0], b=sh[1];
+    const tx=a.x, ty=a.y; a.x=b.x; a.y=b.y; b.x=tx; b.y=ty;
+    banner(`🌀 ĐỔI CA ĐỘT XUẤT! ${a.name} ↔ ${b.name}`);
   }
 }
 
@@ -225,7 +260,24 @@ function nearestStation(p){
   return best;
 }
 
+// 🤾 Ném đồ đang cầm theo hướng đang nhìn
+function throwItem(p){
+  if (p.stunEnd>G.time || p.chopEnd>G.time || p.phone>0 || !p.carry) return;
+  if (p.carry.bucket){ toast(`${p.name}: đừng ném nước, phí lắm! 💧`, '#ffd54a'); return; }
+  G.projs.push({
+    x:p.x+p.dir.x*(PR+12), y:p.y+p.dir.y*(PR+12),
+    vx:p.dir.x*430, vy:p.dir.y*430,
+    ing:p.carry.ing, st:p.carry.st, from:p.slot,
+  });
+  p.carry = null; p.ps.throws++;
+}
+
 function interact(p){
+  if (p.phone > 0){                     // 📞 đang bị sếp gọi: bấm để từ chối
+    p.phone--;
+    if (p.phone<=0) toast(`📞 ${p.name} đã dập máy sếp! Tự do!`, '#7dff9b');
+    return;
+  }
   if (p.stunEnd > G.time || p.chopEnd > G.time) return;
   const s = nearestStation(p);
   if (!s) return;
@@ -316,17 +368,82 @@ function step(dt){
       p.chopEnd=0;
       if (p.carry && p.carry.ing){ p.carry.st='ready'; p.ps.chopped++; }
     }
-    const canMove = p.stunEnd <= G.time && !(p.chopEnd > G.time);
+    const canMove = p.stunEnd <= G.time && !(p.chopEnd > G.time) && p.phone <= 0;
+    let dx=0, dy=0;
     if (canMove){
-      let dx=(p.inp.r?1:0)-(p.inp.l?1:0), dy=(p.inp.d?1:0)-(p.inp.u?1:0);
-      if (dx||dy){
-        const m=Math.hypot(dx,dy);
-        p.x = clamp(p.x + dx/m*SPEED*dt, TILE+PR, W-TILE-PR);
-        p.y = clamp(p.y + dy/m*SPEED*dt, TILE+PR, GRID_H*TILE-TILE-PR);
-      }
+      dx=(p.inp.r?1:0)-(p.inp.l?1:0); dy=(p.inp.d?1:0)-(p.inp.u?1:0);
+      if (p.confuseEnd > G.time){ dx=-dx; dy=-dy; }   // 🌀 đảo phím
     }
+    const mv = Math.hypot(dx,dy)||1;
+    const tvx = dx/mv*SPEED, tvy = dy/mv*SPEED;
+    if (G.slipEnd > G.time){                          // 🧼 sàn trơn: có quán tính, không phanh được
+      p.vx += (tvx-p.vx)*Math.min(1, dt*1.6);
+      p.vy += (tvy-p.vy)*Math.min(1, dt*1.6);
+    } else { p.vx = tvx; p.vy = tvy; }
+    p.x = clamp(p.x + p.vx*dt, TILE+PR, W-TILE-PR);
+    p.y = clamp(p.y + p.vy*dt, TILE+PR, GRID_H*TILE-TILE-PR);
+    if (dx||dy) p.dir = {x:dx/mv, y:dy/mv};
     if (p.inp.a && !p.prevA) interact(p);
     p.prevA = p.inp.a;
+    if (p.inp.t && !p.prevT) throwItem(p);            // 🤾 ném đồ
+    p.prevT = p.inp.t;
+  }
+
+  // 💥 Va chạm giữa người chơi (húc nhau văng nhẹ)
+  for (let i=0;i<G.players.length;i++) for (let j=i+1;j<G.players.length;j++){
+    const a=G.players[i], b=G.players[j];
+    const d=Math.hypot(a.x-b.x, a.y-b.y);
+    if (d>0.01 && d<PR*2){
+      const push=(PR*2-d)/2, nx=(a.x-b.x)/d, ny=(a.y-b.y)/d;
+      a.x=clamp(a.x+nx*push, TILE+PR, W-TILE-PR); a.y=clamp(a.y+ny*push, TILE+PR, GRID_H*TILE-TILE-PR);
+      b.x=clamp(b.x-nx*push, TILE+PR, W-TILE-PR); b.y=clamp(b.y-ny*push, TILE+PR, GRID_H*TILE-TILE-PR);
+    }
+  }
+
+  // 🤾 Đồ đang bay: bắt dính hoặc ăn vào mặt
+  for (const pr of [...G.projs]){
+    pr.x += pr.vx*dt; pr.y += pr.vy*dt;
+    const hit = G.players.find(q => q.slot!==pr.from && Math.hypot(q.x-pr.x, q.y-pr.y) < PR+8);
+    if (hit){
+      if (!hit.carry && hit.stunEnd<=G.time){
+        hit.carry = {ing:pr.ing, st:pr.st};
+        toast(`🙌 ${hit.name} bắt dính ${ING[pr.ing].emoji}!`, '#7dff9b');
+      } else {
+        hit.stunEnd = Math.max(hit.stunEnd, G.time+0.9);
+        const th = G.players.find(q=>q.slot===pr.from);
+        if (th) th.ps.bonks++;
+        toast(`💥 ${hit.name} ăn nguyên ${ING[pr.ing].emoji} vào mặt!`, '#ffd54a');
+      }
+      G.projs.splice(G.projs.indexOf(pr),1); continue;
+    }
+    if (pr.x<TILE+8 || pr.x>W-TILE-8 || pr.y<TILE+8 || pr.y>GRID_H*TILE-TILE-8)
+      G.projs.splice(G.projs.indexOf(pr),1);
+  }
+
+  // 🐀 Chuột: chạy trốn người chơi, dồn góc mới bắt được
+  if (G.rat){
+    const r = G.rat;
+    r.wp -= dt;
+    let nd=1e9, np=null;
+    for (const q of G.players){ const d=Math.hypot(q.x-r.x,q.y-r.y); if(d<nd){nd=d;np=q;} }
+    if (nd<150 && np){ r.tx = r.x+(r.x-np.x)*2; r.ty = r.y+(r.y-np.y)*2; }
+    else if (r.wp<=0 || Math.hypot(r.tx-r.x,r.ty-r.y)<12){
+      r.tx=rand(TILE+20,W-TILE-20); r.ty=rand(TILE+20,GRID_H*TILE-TILE-20); r.wp=1.5;
+    }
+    const dd = Math.hypot(r.tx-r.x, r.ty-r.y)||1;
+    r.x = clamp(r.x+(r.tx-r.x)/dd*250*dt, TILE+14, W-TILE-14);
+    r.y = clamp(r.y+(r.ty-r.y)/dd*250*dt, TILE+14, GRID_H*TILE-TILE-14);
+    const catcher = G.players.find(q => Math.hypot(q.x-r.x, q.y-r.y) < PR+14);
+    if (catcher){
+      if (r.item && !catcher.carry){
+        catcher.carry = r.item;
+        toast(`🐀 ${catcher.name} tóm được chuột, lấy lại ${ING[r.item.ing].emoji}!`, '#7dff9b');
+      } else toast(`🐀 ${catcher.name} đuổi được chuột đi!`, '#7dff9b');
+      G.rat = null;
+    } else if (G.time > r.until){
+      if (r.item) toast(`🐀 Chuột tha mất ${ING[r.item.ing].emoji} luôn rồi!!`, '#ff7676');
+      G.rat = null;
+    }
   }
 
   // Bếp
@@ -373,12 +490,18 @@ function makeView(){
     ln: G.L.name, money: G.money, target: G.L.target,
     tleft: Math.max(0, G.L.duration - G.time),
     blackout: Math.max(0, G.blackoutEnd - G.time),
+    slip: Math.max(0, G.slipEnd - G.time),
     players: G.players.map(p => ({
       x:Math.round(p.x), y:Math.round(p.y), name:p.name, face:p.face, color:p.color,
       carry:p.carry,
       stun: Math.max(0, p.stunEnd - G.time),
       chop: p.chopEnd > G.time ? 1-(p.chopEnd-G.time)/CHOP_TIME : 0,
+      confuse: p.confuseEnd > G.time,
+      phone: p.phone,
+      emote: (p.emote && p.emote.until > G.time) ? p.emote.text : null,
     })),
+    projs: G.projs.map(q => ({x:Math.round(q.x), y:Math.round(q.y), e:ING[q.ing].emoji})),
+    rat: G.rat ? {x:Math.round(G.rat.x), y:Math.round(G.rat.y), e:G.rat.item?ING[G.rat.item.ing].emoji:null} : null,
     stoves: G.stoves.map(s => ({
       fire:s.fire, item:s.item, st:s.st,
       frac: s.st==='cook' ? clamp((G.time-s.t)/COOK_TIME,0,1)
@@ -414,6 +537,7 @@ function titleFor(p, all){
   const isMax = k => s[k] > 0 && s[k] === Math.max(...all.map(q=>q.ps[k]));
   if (isMax('fires'))    return '🔥 Thần Hỏa Hoạn';
   if (isMax('trashed'))  return '🗑️ Vua Lãng Phí';
+  if (isMax('bonks'))    return '🎯 Xạ Thủ Cà Khịa';
   if (isMax('douses'))   return '🧯 Lính Cứu Hỏa';
   if (isMax('strikes'))  return '😤 Chúa Đình Công';
   if (isMax('served'))   return '🛎️ Shipper Chân Chính';
@@ -451,9 +575,10 @@ const MERGED = {
   up:['KeyW','ArrowUp'], left:['KeyA','ArrowLeft'],
   down:['KeyS','ArrowDown'], right:['KeyD','ArrowRight'],
   act:['KeyE','Space','Enter'],
+  thr:['KeyQ','Slash','ShiftLeft','ShiftRight'],
 };
 const has = k => Array.isArray(k) ? k.some(c=>keys.has(c)) : keys.has(k);
-const readMap = m => ({ u:has(m.up), l:has(m.left), d:has(m.down), r:has(m.right), a:has(m.act) });
+const readMap = m => ({ u:has(m.up), l:has(m.left), d:has(m.down), r:has(m.right), a:has(m.act), t:has(m.thr) });
 
 let lastSent = '';
 function clientSendInput(){
@@ -462,9 +587,15 @@ function clientSendInput(){
   if (s !== lastSent){ lastSent = s; clientConn.send({t:'in', k}); }
 }
 window.addEventListener('keydown', e => {
-  if (el('gamewrap').classList.contains('on') &&
-      ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','Enter'].includes(e.code))
+  const inGame = el('gamewrap').classList.contains('on');
+  if (inGame && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','Enter'].includes(e.code))
     e.preventDefault();
+  if (inGame && /^Digit[1-4]$/.test(e.code)){        // 💬 emote nhanh
+    const n = +e.code.slice(5)-1;
+    if (MODE==='client' && clientConn && clientConn.open) clientConn.send({t:'emote', n});
+    else if ((MODE==='host'||MODE==='local') && G && G.players[0])
+      G.players[0].emote = { text: EMOTES[n], until: G.time+2.5 };
+  }
   keys.add(e.code); clientSendInput();
 });
 window.addEventListener('keyup', e => { keys.delete(e.code); clientSendInput(); });
@@ -531,6 +662,10 @@ function hostRoom(){
       } else if (d && d.t === 'in'){
         const idx = lobbyPlayers.findIndex(p=>p.conn===c);
         if (G && idx>=0 && G.players[idx]) G.players[idx].inp = d.k;
+      } else if (d && d.t === 'emote'){
+        const idx = lobbyPlayers.findIndex(p=>p.conn===c);
+        if (G && idx>=0 && G.players[idx])
+          G.players[idx].emote = { text: EMOTES[d.n]||'👋', until: G.time+2.5 };
       }
     });
     c.on('close', () => {
@@ -700,6 +835,19 @@ function drawWorld(v){
   ctx.fillRect(0,0,TILE,GRID_H*TILE);
   ctx.fillRect((GRID_W-1)*TILE,0,TILE,GRID_H*TILE);
   for (let i=0;i<STATIONS.length;i++) drawStation(STATIONS[i], i, v);
+  if (v.slip>0){                                   // 🧼 sàn trơn lấp lánh
+    ctx.globalAlpha=.5;
+    for (let k=0;k<6;k++)
+      txt('✨', TILE*2+((k*137)%(W-TILE*4)), TILE*1.6+((k*211)%(TILE*5)), 16);
+    ctx.globalAlpha=1;
+  }
+  if (v.rat){                                      // 🐀 chuột
+    txt('🐀', v.rat.x, v.rat.y, 24);
+    if (v.rat.e) txt(v.rat.e, v.rat.x+15, v.rat.y-14, 14);
+  }
+  for (const q of (v.projs||[])){                  // 🤾 đồ bay xoay vòng
+    ctx.save(); ctx.translate(q.x,q.y); ctx.rotate((animT()*12)%6.283); txt(q.e,0,0,20); ctx.restore();
+  }
   [...v.players].sort((a,b)=>a.y-b.y).forEach(drawPlayer);
   ctx.restore();
 }
@@ -762,6 +910,20 @@ function drawPlayer(p){
   if (p.stun>0){
     txt('😤',p.x+PR+4, p.y-PR+Math.sin(animT()*4)*4, 20);
     txt('ĐÌNH CÔNG!',p.x,p.y-PR-34,11,'#ff5a5f','center',true);
+  }
+  if (p.confuse){                                  // 🌀 đang bị đảo phím
+    ctx.save(); ctx.translate(p.x+PR+6, p.y-PR-4); ctx.rotate((animT()*6)%6.283); txt('🌀',0,0,16); ctx.restore();
+  }
+  if (p.phone>0){                                  // 📞 sếp gọi
+    txt('📱', p.x, p.y-PR-16, 20);
+    txt(`SẾP GỌI! Bấm tương tác x${p.phone}`, p.x, p.y-PR-34, 11, '#ff5a5f','center',true);
+  }
+  if (p.emote){                                    // 💬 bong bóng emote
+    ctx.font='700 13px "Segoe UI",sans-serif';
+    const w = ctx.measureText(p.emote).width+18;
+    ctx.fillStyle='#fff'; rr(ctx, p.x-w/2, p.y-PR-58, w, 24, 10); ctx.fill();
+    ctx.strokeStyle='#3b3557'; ctx.lineWidth=2; ctx.stroke();
+    txt(p.emote, p.x, p.y-PR-46, 13, '#222','center',true);
   }
 }
 
@@ -858,6 +1020,9 @@ function playDiffs(prev,v){
   const carr = s => s.players.filter(p=>p.carry).length;
   if (carr(v) > carr(prev)) SFX.pick();
   if (carr(v) < carr(prev) && v.money === prev.money) SFX.place();
+  const pj = s => (s.projs||[]).length;
+  if (pj(v) > pj(prev)){ tone(760,.05); tone(520,.08,'square',.12,.05); }   // tiếng ném vèo
+  if (v.rat && !prev.rat){ tone(1200,.06); tone(1400,.06,'square',.12,.08); } // chít chít
   if (MODE==='client' && v.blackout>0 && prev.blackout<=0) SFX.spark();
 }
 
