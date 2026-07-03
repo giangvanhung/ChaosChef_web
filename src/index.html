@@ -5,7 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chaos Chef 🍳 — Hợp tác, hoảng loạn, cười tím mặt</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
-<link rel="stylesheet" href="./static/css/style.css">
+<link rel="stylesheet" href="./static/css/base.css">
+<link rel="stylesheet" href="./static/css/menu.css">
+<link rel="stylesheet" href="./static/css/lobby.css">
+<link rel="stylesheet" href="./static/css/game.css">
+<link rel="stylesheet" href="./static/css/controls.css">
+<link rel="stylesheet" href="./static/css/endscreen.css">
 </head>
 <body>
 
@@ -73,9 +78,26 @@
 
 <!-- ============ GAME ============ -->
 <div id="gamewrap">
-  <button id="leavebtn" class="small ghost" onclick="leaveGame()">🚪 Rời phòng</button>
-  <button id="recbtn" class="small ghost" onclick="toggleRec()">⏺ Quay clip</button>
-  <canvas id="cv" width="832" height="662"></canvas>
+  <div class="gamebtnrow">
+    <button id="leavebtn" class="small ghost" onclick="leaveGame()">🚪 Rời phòng</button>
+    <button id="mobileToggleBtn" class="small ghost" onclick="toggleMobileControls()">📱 Nút cảm ứng</button>
+    <button id="recbtn" class="small ghost" onclick="toggleRec()">⏺ Quay clip</button>
+  </div>
+  <div class="canvasWrap">
+    <canvas id="cv" width="832" height="662"></canvas>
+    <div id="mobileControls">
+      <div class="mpad">
+        <button class="mbtn mup" data-k="up">▲</button>
+        <button class="mbtn mleft" data-k="left">◀</button>
+        <button class="mbtn mdown" data-k="down">▼</button>
+        <button class="mbtn mright" data-k="right">▶</button>
+      </div>
+      <div class="mactions">
+        <button class="mbtn mthr" data-k="thr">🤾</button>
+        <button class="mbtn mact" data-k="act">✋</button>
+      </div>
+    </div>
+  </div>
   <div id="hint">Lại gần trạm + phím tương tác. 🤾 Ném đồ: <b>Q</b> (P2: <b>/</b>, P3: <b>U</b>, P4: <b>R</b>) — ném cho nhau bắt hoặc... vào mặt nhau. 💬 Emote: phím <b>1–4</b>.</div>
 </div>
 
@@ -90,6 +112,13 @@
   <div class="waiting" id="endWait"></div>
 </div>
 
-<script src="./static/js/script.js"></script>
+<script src="./static/js/constants.js"></script>
+<script src="./static/js/audio.js"></script>
+<script src="./static/js/dom.js"></script>
+<script src="./static/js/gameplay.js"></script>
+<script src="./static/js/render.js"></script>
+<script src="./static/js/input.js"></script>
+<script src="./static/js/network.js"></script>
+<script src="./static/js/ui.js"></script>
 </body>
 </html>

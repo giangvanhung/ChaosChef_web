@@ -1,0 +1,32 @@
+/* ---------- Điều khiển cảm ứng (mobile) ---------- */
+#mobileControls {
+  --msz:54px; --mgap:6px;
+  position:absolute; left:0; right:0; bottom:6px; display:none;
+  justify-content:space-between; align-items:flex-end; padding:0 8px;
+  pointer-events:none; z-index:5;
+}
+#mobileControls.on { display:flex; }
+.mpad {
+  display:grid; grid-template-columns:var(--msz) var(--msz) var(--msz); grid-template-rows:var(--msz) var(--msz);
+  grid-template-areas: ". up ." "left down right";
+  gap:var(--mgap); pointer-events:auto;
+}
+.mpad .mup    { grid-area:up; }
+.mpad .mleft  { grid-area:left; }
+.mpad .mdown  { grid-area:down; }
+.mpad .mright { grid-area:right; }
+.mactions { display:flex; gap:var(--mgap); align-items:flex-end; pointer-events:auto; }
+.mbtn {
+  width:var(--msz); height:var(--msz); border-radius:50%; padding:0;
+  background:#2a2c48ee; border:2px solid #4fc3f7aa; color:#fff; font-size:20px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 3px 0 #191a30; touch-action:none; user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.mbtn:active, .mbtn.active {
+  background:#f4552eee; border-color:#ffb347; transform:translateY(2px); box-shadow:0 1px 0 #191a30;
+}
+.mactions .mthr { background:#4fc3f7cc; }
+.mactions .mact { width:calc(var(--msz) + 12px); height:calc(var(--msz) + 12px); font-size:26px; background:#ff8a3dcc; }
+@media (max-width:480px)      { #mobileControls { --msz:40px; --mgap:4px; } .mbtn { font-size:15px; } .mactions .mact { font-size:19px; } }
+@media (max-height:480px)     { #mobileControls { --msz:38px; --mgap:4px; } }

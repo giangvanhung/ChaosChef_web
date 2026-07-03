@@ -1,0 +1,8 @@
+#gamewrap { position:relative; display:none; }
+#gamewrap.on { display:block; }
+canvas { border-radius:14px; display:block; background:#1a1c2c; max-width:100%; }
+.canvasWrap { position:relative; display:inline-block; max-width:100%; }
+.gamebtnrow {
+  display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:8px;
+}
+#hint { color:#8f89a3; font-size:12.5px; margin-top:8px; text-align:center; }
