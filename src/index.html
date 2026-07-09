@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chaos Chef 🍳 — Hợp tác, hoảng loạn, cười tím mặt</title>
+<!-- SVG cho trình duyệt hiện đại (nét ở mọi cỡ), PNG/ICO cho Safari cũ và tab pinned -->
+<link rel="icon" type="image/svg+xml" href="./static/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="./static/favicon-32.png">
+<link rel="alternate icon" href="./static/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="./static/apple-touch-icon.png">
+<meta name="theme-color" content="#12131f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
 <link rel="stylesheet" href="./static/css/base.css">
 <link rel="stylesheet" href="./static/css/menu.css">
@@ -14,53 +23,77 @@
 </head>
 <body>
 
-<h1 class="title">CHAOS CHEF 🍳</h1>
-<div class="tagline">"Hợp tác, hoảng loạn, cười tím mặt."</div>
+<header id="brand">
+  <h1 class="title">CHAOS CHEF 🍳</h1>
+  <div class="tagline">"Hợp tác, hoảng loạn, cười tím mặt."</div>
+</header>
 
 <!-- ============ MENU ============ -->
 <div id="menu" class="screen on">
   <div class="cardrow">
-    <div class="mcard">
-      <h3>🛋️ Chung 1 máy</h3>
-      <p>2–4 người ngồi cùng máy, chia nhau bàn phím. Tụ tập là chiến luôn!</p>
-      <div class="pillrow" id="localCount">
-        <div class="pill" data-n="1">1</div>
-        <div class="pill sel" data-n="2">2</div>
-        <div class="pill" data-n="3">3</div>
-        <div class="pill" data-n="4">4</div>
+    <div class="mcard local">
+      <div class="micon">🛋️</div>
+      <h3 id="localTitle">Chung 1 máy</h3>
+      <p id="localDesc">2–4 người ngồi cùng máy, chia nhau bàn phím. Tụ tập là chiến luôn!</p>
+      <!-- Máy cảm ứng: ẩn cả cụm này đi, vì chỉ có một bộ nút nên P2–P4 sẽ đứng yên -->
+      <div id="localCountWrap">
+        <div class="flabel">Số người chơi</div>
+        <div class="pillrow" id="localCount">
+          <div class="pill" data-n="1">1</div>
+          <div class="pill sel" data-n="2">2</div>
+          <div class="pill" data-n="3">3</div>
+          <div class="pill" data-n="4">4</div>
+        </div>
       </div>
-      <button onclick="startLocal()">Vào bếp ngay!</button>
+      <div class="mnote" id="localSoloNote" hidden>
+        📱 Điện thoại chỉ có <b>một</b> bộ nút cảm ứng.<br>
+        Muốn chơi cùng bạn: mỗi người một máy, dùng <b>phòng online</b> bên cạnh.
+      </div>
+      <button class="wide" onclick="startLocal()">Vào bếp ngay!</button>
     </div>
-    <div class="mcard">
-      <h3>🌐 Tạo phòng online</h3>
+
+    <div class="mcard host">
+      <div class="micon">🌐</div>
+      <h3>Tạo phòng online</h3>
       <p>Tạo phòng, gửi mã 4 ký tự cho bạn bè qua Discord/Zalo là chơi được từ xa.</p>
+      <div class="flabel">Tên hiển thị</div>
       <input type="text" class="name" id="hostName" placeholder="Tên của bạn" maxlength="10">
-      <button class="alt" onclick="hostRoom()">Tạo phòng</button>
+      <button class="alt wide" onclick="hostRoom()">Tạo phòng</button>
       <div class="err" id="hostErr"></div>
     </div>
-    <div class="mcard">
-      <h3>🔑 Vào phòng bạn bè</h3>
+
+    <div class="mcard join">
+      <div class="micon">🔑</div>
+      <h3>Vào phòng bạn bè</h3>
       <p>Nhập mã phòng mà chủ phòng gửi cho bạn.</p>
+      <div class="flabel">Tên hiển thị</div>
       <input type="text" class="name" id="joinName" placeholder="Tên của bạn" maxlength="10">
-      <input type="text" id="joinCode" placeholder="MÃ PHÒNG" maxlength="4">
-      <button class="alt" onclick="joinRoom()">Vào phòng</button>
+      <div class="flabel">Mã phòng</div>
+      <input type="text" class="code" id="joinCode" placeholder="? ? ? ?" maxlength="4">
+      <button class="alt wide" onclick="joinRoom()">Vào phòng</button>
       <div class="err" id="joinErr"></div>
     </div>
   </div>
 
-  <div class="howto">
-    <b>🎮 Cách chơi:</b> Cùng nhau nấu món theo đơn hàng trước khi hết giờ. Lấy nguyên liệu ở <b>📦 thùng</b>,
-    đem <b>🔪 chặt</b> hoặc <b>🍳 nấu</b> cho chín, rồi mang ra <b>🛎️ quầy giao</b>. Đủ nguyên liệu của một đơn = tiền về!
-    Để đồ trên bếp quá lâu = <b>🔥 CHÁY BẾP</b> (lấy 💧 ở vòi nước để dập). Thỉnh thoảng sẽ có
-    <b>⚡ cắt điện</b>, <b>👑 khách VIP</b>, <b>😤 đồng đội đình công</b>... chúc may mắn!<br><br>
-    <b>⌨️ Phím (chung máy):</b>
-    P1 <span class="kbd">W A S D</span>+<span class="kbd">E</span> &nbsp;|&nbsp;
-    P2 <span class="kbd">← ↑ ↓ →</span>+<span class="kbd">Enter</span> &nbsp;|&nbsp;
-    P3 <span class="kbd">I J K L</span>+<span class="kbd">O</span> &nbsp;|&nbsp;
-    P4 <span class="kbd">T F G H</span>+<span class="kbd">Y</span><br>
-    <b>⌨️ Online:</b> <span class="kbd">W A S D</span> hoặc <span class="kbd">mũi tên</span>, tương tác bằng <span class="kbd">E</span> / <span class="kbd">Space</span>.<br>
-    <b>📹 Quay clip:</b> bấm nút <b>⏺ Quay clip</b> góc phải khi chơi — file video tự tải về, đăng TikTok liền tay!
-  </div>
+  <details class="howto" open>
+    <summary>🎮 Cách chơi &amp; phím bấm</summary>
+    <div class="howtobody">
+      <p>Cùng nhau nấu món theo đơn hàng trước khi hết giờ. Lấy nguyên liệu ở <b>📦 thùng</b>,
+      đem <b>🔪 chặt</b> hoặc <b>🍳 nấu</b> cho chín, rồi mang ra <b>🛎️ quầy giao</b>. Đủ nguyên liệu của một đơn = tiền về!
+      Để đồ trên bếp quá lâu = <b>🔥 CHÁY BẾP</b> (lấy 💧 ở vòi nước để dập). Thỉnh thoảng sẽ có
+      <b>⚡ cắt điện</b>, <b>👑 khách VIP</b>, <b>😤 đồng đội đình công</b>... chúc may mắn!</p>
+
+      <div class="keygrid">
+        <div class="keyrow"><span class="ktag">P1</span> <span class="kbd">W A S D</span> + <span class="kbd">E</span></div>
+        <div class="keyrow"><span class="ktag">P2</span> <span class="kbd">← ↑ ↓ →</span> + <span class="kbd">Enter</span></div>
+        <div class="keyrow"><span class="ktag">P3</span> <span class="kbd">I J K L</span> + <span class="kbd">O</span></div>
+        <div class="keyrow"><span class="ktag">P4</span> <span class="kbd">T F G H</span> + <span class="kbd">Y</span></div>
+      </div>
+
+      <p><b>⌨️ Online:</b> <span class="kbd">W A S D</span> hoặc <span class="kbd">mũi tên</span>, tương tác bằng <span class="kbd">E</span> / <span class="kbd">Space</span>.<br>
+      <b>📹 Quay clip:</b> mở <b>⚙️</b> khi chơi rồi bấm <b>⏺ Quay clip</b> — file video tự tải về, đăng TikTok liền tay!</p>
+    </div>
+  </details>
 </div>
 
 <!-- ============ LOBBY ============ -->
@@ -78,11 +111,6 @@
 
 <!-- ============ GAME ============ -->
 <div id="gamewrap">
-  <div class="gamebtnrow">
-    <button id="leavebtn" class="small ghost" onclick="leaveGame()">🚪 Rời phòng</button>
-    <button id="mobileToggleBtn" class="small ghost" onclick="toggleMobileControls()">📱 Nút cảm ứng</button>
-    <button id="recbtn" class="small ghost" onclick="toggleRec()">⏺ Quay clip</button>
-  </div>
   <div class="canvasWrap">
     <canvas id="cv" width="832" height="662"></canvas>
     <div id="mobileControls">
@@ -98,7 +126,28 @@
       </div>
     </div>
   </div>
-  <div id="hint">Lại gần trạm + phím tương tác. 🤾 Ném đồ: <b>Q</b> (P2: <b>/</b>, P3: <b>U</b>, P4: <b>R</b>) — ném cho nhau bắt hoặc... vào mặt nhau. 💬 Emote: phím <b>1–4</b>.</div>
+
+  <button id="optbtn" onclick="toggleOptions()" title="Tuỳ chọn (Esc)">⚙️</button>
+
+  <div id="optionsPanel">
+    <div class="optcard">
+      <h3 id="optTitle">⚙️ Tuỳ chọn</h3>
+
+      <div class="optsize">
+        <label for="mszRange">🕹️ Cỡ joystick &amp; nút — <b id="mszVal">54</b>px</label>
+        <input type="range" id="mszRange" min="32" max="96" step="2">
+        <button class="ghost small" onclick="resetMobileSize()">↺ Cỡ mặc định</button>
+      </div>
+
+      <div class="optbtns">
+        <button onclick="closeOptions()">▶ Chơi tiếp</button>
+        <button id="mobileToggleBtn" class="ghost" onclick="toggleMobileControls()">📱 Nút cảm ứng</button>
+        <button id="recbtn" class="ghost" onclick="toggleRec()">⏺ Quay clip</button>
+        <button id="leavebtn" class="alt" onclick="leaveGame()">🚪 Rời phòng</button>
+      </div>
+      <div id="hint">Lại gần trạm + phím tương tác. 🤾 Ném đồ: <b>Q</b> (P2: <b>/</b>, P3: <b>U</b>, P4: <b>R</b>) — ném cho nhau bắt hoặc... vào mặt nhau. 💬 Emote: phím <b>1–4</b>.</div>
+    </div>
+  </div>
 </div>
 
 <!-- ============ END ============ -->

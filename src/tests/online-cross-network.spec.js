@@ -12,23 +12,23 @@
 // động, không chỉ là "có khai báo cho có".
 //
 // Muốn xác nhận 100% ngoài đời thật thì vẫn cần 2 thiết bị thật ở 2 mạng
-// khác nhau chơi thử — xem gợi ý ở cuối HUONG_DAN.md.
+// khác nhau chơi thử — xem gợi ý trong README.md.
 //
-// HIỆN TRẠNG (đã kiểm chứng lúc viết bộ test này): 2 test dưới đây ĐANG FAIL
-// THẬT — không phải lỗi test. Kiểm tra tay bằng RTCPeerConnection thô cho
-// thấy server TURN đang cấu hình trong PEER_OPTS (openrelay.metered.ca, cả
-// UDP:80 lẫn TCP:443) không trả về relay candidate nào cả (0/0) dù STUN
-// thường vẫn hoạt động bình thường từ cùng máy — tức là chặng dự phòng TURN
-// coi như không tồn tại trên thực tế. Vụ "thêm TURN" trước đó chỉ được xác
-// nhận bằng test 2 tab TRÊN CÙNG 1 MÁY nên luôn đi thẳng qua STUN, chưa bao
-// giờ thực sự chạm tới TURN — bài test này là lần đầu ép buộc dùng TURN
-// thật và phát hiện ra nó chết. Free TURN công cộng kiểu này rất hay bị
-// khai tử/giới hạn traffic theo thời gian nên đây gần như luôn xảy ra sớm
-// muộn với bất kỳ dịch vụ miễn phí nào. Để sửa thật sự cần một trong: (1)
-// đăng ký TURN free-tier có API key (Metered.ca, Cloudflare Calls, Twilio,
-// Xirsys...) rồi đổi iceServers trong network.js, hoặc (2) tự host coturn.
-// Cứ để 2 test này ở trạng thái fail — đó là tín hiệu đúng, đừng xoá hay
-// nới lỏng điều kiện relay-only để "cho qua".
+// HIỆN TRẠNG: 2 test dưới đây FAIL CÓ CHỦ Ý, và sẽ tự pass ngay khi có TURN thật.
+// `TURN_SERVERS` trong network.js đang để TRỐNG, vì TURN miễn phí Open Relay đã
+// chết: đo lại ngày 09/07/2026 bằng cách gom ICE candidate trong Chromium thì cả
+// openrelay.metered.ca (:80, :443, :443?transport=tcp) lẫn staticauth.openrelay…
+// đều cho 0 relay candidate, trong khi STUN từ cùng máy vẫn ra srflx bình thường.
+//
+// Trước đây "thêm TURN" chỉ được xác nhận bằng 2 tab TRÊN CÙNG 1 MÁY — đường đó
+// luôn đi thẳng qua STUN nên chưa bao giờ chạm tới TURN. Bài test này là chỗ đầu
+// tiên ép buộc dùng TURN và phát hiện nó chết. TURN công cộng miễn phí kiểu này
+// sớm muộn gì cũng bị khai tử, nên đừng trông cậy vào cái nào không có API key.
+//
+// Để 2 test này xanh, cần một trong hai: (1) đăng ký TURN free-tier có API key
+// (Metered.ca, Cloudflare Calls, Twilio, Xirsys...) rồi điền vào TURN_SERVERS,
+// hoặc (2) tự dựng coturn. ĐỪNG xoá hay nới lỏng điều kiện relay-only để "cho
+// qua" — chúng là cảm biến báo chặng dự phòng có thật sự hoạt động hay không.
 const { test, expect } = require('@playwright/test');
 const { hostRoom, joinRoom, waitClientJoined, forceRelayOnly } = require('./helpers');
 

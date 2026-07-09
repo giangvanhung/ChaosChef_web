@@ -1,10 +1,52 @@
+# ---- Phụ thuộc ----
+node_modules/
+
+# ---- Playwright ----
+test-results/
+playwright-report/
+playwright/.cache/
+blob-report/
+trace.zip
+
+# ---- Deploy ----
+# .vercel chứa projectId/orgId gắn với tài khoản riêng, không phải cấu hình chung
+.vercel/
+.netlify/
+
+# ---- Sản phẩm của game ----
+# clip do nút "⏺ Quay clip" tải về, hay nằm lẫn trong thư mục dự án
 *.webm
+
+# ---- Biến môi trường / bí mật ----
+.env
+.env.*
+!.env.example
+
+# ---- Nhật ký ----
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- Rác của hệ điều hành ----
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 .DS_Store
+._*
+.Spotlight-V100
+.Trashes
 
-.vercel
+# ---- Trình soạn thảo ----
+.idea/
+*.swp
+*~
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 
-node_modules
-test-results
-playwright-report
-playwright/.cache
+# ---- Claude Code ----
+# settings.json dùng chung cho nhóm thì nên commit; bản .local là của riêng từng người.
+.claude/settings.local.json

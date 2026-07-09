@@ -61,12 +61,35 @@ const STATIONS = [
 ];
 const STOVE_IDX = STATIONS.map((s,i)=>s.type==='stove'?i:-1).filter(i=>i>=0);
 
+// ---------- Bảng màu dùng chung cho canvas (song song với biến CSS ở base.css) ----------
+// Hướng Claymorphism: thân màu đặc + mặt trên sáng hơn + viền tối + đổ bóng.
+const T = {
+  ink:'#12131f', panel:'#1e2036', line:'#34365a',
+  text:'#f5f0e8', dim:'#a49ec0',
+  gold:'#ffc53d', money:'#ffd76a',
+  good:'#34d399', warn:'#ffb347', bad:'#ff5a5f',
+  floorA:'#f2e6d2', floorB:'#e8d9c0', grout:'#d5c3a6',
+  wall:'#4a4266', wallTop:'#5d5480',
+};
+
+// Trạm: [thân, mặt trên, viền]
+const ST_CLAY = {
+  crate:  ['#8f6242','#a9764f','#5f3f2a'],
+  chop:   ['#5b6478','#727d94','#3b4152'],
+  stove:  ['#453f63','#5a527f','#2c2842'],
+  sink:   ['#3d6b8a','#4f88ab','#264659'],
+  trash:  ['#54546b','#6b6b86','#373746'],
+  switch: ['#8a6d1f','#b08c28','#5a4611'],
+  serve:  ['#b07d10','#d8a520','#75530a'],
+};
+
 // ---------- Nhân vật ----------
+// 4 màu tách bạch nhau và tách khỏi cam/hổ phách của HUD lẫn nâu/tím của trạm.
 const CHARS = [
-  { face:'👨‍🍳', color:'#ff5a5f', name:'Sơn'  },
-  { face:'👩‍🍳', color:'#ff8fd6', name:'Lan'  },
+  { face:'👨‍🍳', color:'#ff4d4d', name:'Sơn'  },
+  { face:'👩‍🍳', color:'#c084fc', name:'Lan'  },
   { face:'🧑‍🍳', color:'#4fc3f7', name:'Tuấn' },
-  { face:'🥸',   color:'#81c784', name:'Huy'  },
+  { face:'🥸',   color:'#22c55e', name:'Huy'  },
 ];
 
 // ---------- Phím local (4 người 1 bàn phím) ----------

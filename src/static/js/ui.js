@@ -9,7 +9,9 @@ let prevView = null;
 function playLevel(idx){
   if (MODE === 'client') return;
   let players;
-  if (MODE === 'host') players = lobbyPlayers.map((p,i)=>newPlayer(i, p.name));
+  // Dùng ghế đã gán lúc vào phòng, KHÔNG dùng chỉ số mảng: có người rời phòng là
+  // mảng dồn lại, lấy chỉ số thì những người còn lại bị đổi nhân vật ở ván sau.
+  if (MODE === 'host') players = lobbyPlayers.map(p=>newPlayer(p.seat, p.name));
   else players = Array.from({length: localN}, (_,i)=>newPlayer(i));
   G = newGame(idx, players);
   prevView = null; latestView = null; simT = performance.now();
@@ -30,13 +32,16 @@ function finishLevel(){
 function showLobby(isHost){
   show('lobby');
   el('lobbyCode').textContent = roomCode;
-  const names = isHost ? lobbyPlayers.map(p=>p.name) : lobbyRemote.map(p=>p.name);
+  // Xếp từng người vào đúng ghế của họ; ghế bỏ trống thì hiện 💤 tại chỗ đó.
+  const list = isHost ? lobbyPlayers : lobbyRemote;
+  const seated = [null,null,null,null];
+  for (const p of list) if (p.seat >= 0 && p.seat < 4) seated[p.seat] = p;
   const pl = el('plist'); pl.innerHTML = '';
   for (let i=0;i<4;i++){
     const d = document.createElement('div');
-    if (i < names.length){
+    if (seated[i]){
       d.className = 'pslot';
-      d.innerHTML = `<div class="face">${CHARS[i].face}</div><div class="pname" style="color:${CHARS[i].color}">${esc(names[i])}</div>`;
+      d.innerHTML = `<div class="face">${CHARS[i].face}</div><div class="pname" style="color:${CHARS[i].color}">${esc(seated[i].name)}</div>`;
     } else {
       d.className = 'pslot empty';
       d.innerHTML = `<div class="face">💤</div><div class="pname">Trống</div>`;
@@ -86,6 +91,24 @@ function showEnd(e){
   }
 }
 
+// ---------- Bảng tuỳ chọn trong ván (mở bảng = tạm dừng) ----------
+// Chỉ ván "chung 1 máy" mới dừng được. Online thì không: host dừng là dừng luôn
+// của cả phòng, còn client vốn không giữ mô phỏng nên chẳng có gì để dừng.
+let paused = false;
+function setOptions(on){
+  el('optionsPanel').classList.toggle('on', on);
+  paused = on && MODE === 'local';
+  simT = performance.now();             // bỏ khoảng thời gian đứng yên, khỏi nhảy dt
+  keys.clear(); clientSendInput();      // nhả hết phím đang giữ khi mở/đóng bảng
+  el('optTitle').textContent = !on ? '⚙️ Tuỳ chọn'
+    : paused ? '⏸ Tạm dừng'
+    : '⚙️ Tuỳ chọn — ván online vẫn đang chạy!';
+}
+function toggleOptions(){ setOptions(!el('optionsPanel').classList.contains('on')); }
+function closeOptions(){ setOptions(false); }
+// Bấm ra vùng tối ngoài thẻ = đóng bảng
+el('optionsPanel').addEventListener('click', e => { if (e.target.id === 'optionsPanel') closeOptions(); });
+
 // ---------- Quay clip (MediaRecorder) ----------
 let rec=null, recChunks=[];
 function toggleRec(){
@@ -118,6 +141,7 @@ function toggleRec(){
 // người chơi 2 gửi input mà không ai xử lý. Tab có WebRTC không bị throttle.
 let latestView = null, simT = performance.now(), sendAcc = 0;
 setInterval(() => {
+  if (paused){ simT = performance.now(); return; }   // đang mở bảng tuỳ chọn (ván 1 máy)
   if (!((MODE==='local' || MODE==='host') && G && !G.over)){ simT = performance.now(); return; }
   const now = performance.now();
   const dt = Math.min(0.1,(now-simT)/1000); simT = now;

@@ -1,8 +1,64 @@
-#gamewrap { position:relative; display:none; }
-#gamewrap.on { display:block; }
-canvas { border-radius:14px; display:block; background:#1a1c2c; max-width:100%; }
-.canvasWrap { position:relative; display:inline-block; max-width:100%; }
-.gamebtnrow {
-  display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:8px;
+#gamewrap { display:none; }
+#gamewrap.on {
+  --pad:8px;
+  position:fixed; inset:0; z-index:10;
+  display:flex; align-items:center; justify-content:center;
+  padding:var(--pad); background:#12131f;
 }
-#hint { color:#8f89a3; font-size:12.5px; margin-top:8px; text-align:center; }
+canvas { border-radius:14px; display:block; background:#1a1c2c; width:100%; height:100%; }
+
+/* Khung game giữ đúng tỉ lệ 832×662 và luôn vừa khung nhìn:
+   lấy bề rộng nhỏ hơn giữa "hết chiều ngang" và "chiều cao quy ra bề rộng". */
+.canvasWrap {
+  position:relative;
+  aspect-ratio:832 / 662;
+  width:min(100%, calc((100vh - var(--pad) * 2) * 832 / 662));
+  width:min(100%, calc((100dvh - var(--pad) * 2) * 832 / 662));
+}
+@media (max-width:600px) { #gamewrap.on { --pad:0px; } canvas { border-radius:0; } }
+
+/* ---------- Nút ⚙️ và bảng tuỳ chọn ---------- */
+/* z-index cao hơn lớp phủ để lúc bảng đang mở vẫn bấm được (đóng bảng) */
+#optbtn {
+  position:absolute; top:10px; right:12px; z-index:40;
+  width:44px; height:44px; padding:0; font-size:20px; line-height:1;
+  border-radius:50%; background:#2a2c48ee; box-shadow:0 3px 0 #191a30;
+}
+/* Thẻ đẩy lên trên (không căn giữa dọc) để cụm joystick ở đáy vẫn lộ ra
+   phía sau lớp mờ — kéo thanh chỉnh cỡ là thấy nút to nhỏ theo ngay. */
+#optionsPanel {
+  position:absolute; inset:0; z-index:30; display:none;
+  align-items:flex-start; justify-content:center;
+  padding:4vh 8px; overflow-y:auto;
+  background:#12131fbb; backdrop-filter:blur(2px);
+}
+#optionsPanel.on { display:flex; }
+.optcard {
+  background:#1e2036; border:2px solid #34365a; border-radius:16px;
+  padding:20px 24px; max-width:min(92vw, 440px); text-align:center;
+}
+.optcard h3 { margin-bottom:14px; font-size:20px; }
+.optbtns { display:flex; flex-direction:column; gap:10px; }
+
+/* Thanh chỉnh cỡ joystick/nút */
+.optsize {
+  display:flex; flex-direction:column; gap:8px; align-items:center;
+  background:#12131f; border:2px solid #34365a; border-radius:12px;
+  padding:12px; margin-bottom:14px;
+}
+.optsize label { font-size:13px; color:#b8b2c8; }
+.optsize label b { color:#ffb347; }
+.optsize .small { padding:5px 10px; font-size:12px; }
+#mszRange {
+  -webkit-appearance:none; appearance:none; width:100%; height:8px;
+  border-radius:4px; background:#34365a; cursor:pointer;
+}
+#mszRange::-webkit-slider-thumb {
+  -webkit-appearance:none; appearance:none; width:22px; height:22px;
+  border-radius:50%; background:#ff8a3d; border:2px solid #fff; cursor:pointer;
+}
+#mszRange::-moz-range-thumb {
+  width:22px; height:22px; border-radius:50%;
+  background:#ff8a3d; border:2px solid #fff; cursor:pointer;
+}
+#hint { color:#8f89a3; font-size:12.5px; margin-top:16px; text-align:center; line-height:1.5; }

@@ -1,19 +1,109 @@
-.cardrow { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
+.cardrow { display:flex; gap:18px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
+
+/* Mỗi thẻ có một dải màu riêng ở mép trên + quầng sáng mờ theo màu đó,
+   để ba lựa chọn phân biệt được ngay từ liếc mắt đầu tiên. */
 .mcard {
-  background:#1f2135; border:2px solid #34365a; border-radius:16px;
-  padding:22px 24px; width:262px; text-align:center;
+  --accent:var(--primary);
+  position:relative; overflow:hidden;
+  background:linear-gradient(180deg,var(--panel-2),#1c1e30);
+  border:3px solid var(--line); border-radius:var(--r-lg);
+  padding:26px 24px 22px; width:274px; text-align:center;
+  display:flex; flex-direction:column;
+  box-shadow:0 8px 0 rgba(0,0,0,.32), 0 16px 30px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.08);
+  transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.mcard::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:4px;
+  background:var(--accent);
+}
+.mcard::after {
+  content:''; position:absolute; top:-70px; left:50%; transform:translateX(-50%);
+  width:190px; height:140px; border-radius:50%; pointer-events:none;
+  background:var(--accent); opacity:.16; filter:blur(34px);
+}
+.mcard:hover {
+  transform:translateY(-4px); border-color:var(--accent);
+  box-shadow:0 12px 0 rgba(0,0,0,.32), 0 20px 36px rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.1);
+}
+@media (prefers-reduced-motion:reduce) { .mcard, .pill { transition:none; } }
+.mcard.local { --accent:var(--primary); }
+.mcard.host  { --accent:var(--info); }
+.mcard.join  { --accent:var(--p2); }
+
+.micon {
+  position:relative; width:56px; height:56px; margin:0 auto 12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:28px; border-radius:50%;
+  background:#12131f; border:2px solid var(--accent);
 }
 .mcard h3 { font-size:19px; margin-bottom:8px; }
-.mcard p { font-size:13px; color:#b8b2c8; margin-bottom:14px; min-height:52px; }
-.pillrow { display:flex; gap:8px; justify-content:center; margin-bottom:12px; }
+.mcard p { font-size:13px; color:#b8b2c8; margin-bottom:16px; min-height:52px; line-height:1.5; }
+
+/* Nhãn nhỏ trên mỗi ô nhập — bớt cảnh "3 ô trống chẳng biết điền gì" */
+.flabel {
+  font-size:11px; font-weight:700; letter-spacing:.8px; text-transform:uppercase;
+  color:#8f89a3; text-align:left; margin-bottom:6px;
+}
+.mcard button.wide { width:100%; margin-top:auto; }
+
+/* Ghi chú "trên điện thoại chỉ chơi 1 người" */
+.mnote {
+  background:#12131f; border:1px dashed #4fc3f755; border-radius:10px;
+  padding:10px 12px; margin-bottom:16px;
+  font-size:12px; color:#b8b2c8; line-height:1.55;
+}
+.mnote b { color:#4fc3f7; }
+
+.pillrow { display:flex; gap:8px; justify-content:center; margin-bottom:16px; }
 .pill {
-  background:#2a2c48; border:2px solid #34365a; border-radius:10px; padding:8px 14px;
-  cursor:pointer; font-weight:700;
+  flex:1; background:#2a2c48; border:2px solid var(--line); border-radius:var(--r-sm);
+  padding:0; min-height:44px; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-family:var(--font-head); font-weight:700;
+  box-shadow:0 3px 0 rgba(0,0,0,.35);
+  transition:background .15s ease, border-color .15s ease, transform .12s ease;
 }
-.pill.sel { background:#f4552e; border-color:#ffb347; }
+.pill:hover { border-color:#565a8c; }
+.pill.sel {
+  background:var(--accent); border-color:var(--gold); color:#fff;
+  box-shadow:0 3px 0 var(--primary-d), 0 0 16px #ff8a3d55;
+}
+
+.mcard input[type=text] { margin-bottom:14px; }
+.mcard input[type=text]:focus {
+  outline:none; border-color:var(--accent); box-shadow:0 0 0 3px #ffffff14;
+}
+input.code { letter-spacing:10px; font-weight:900; font-size:20px; text-indent:10px; }
+
+/* ---------- Hộp "Cách chơi" gấp lại được ---------- */
 .howto {
-  background:#1f2135; border-radius:14px; padding:16px 20px; margin-top:22px;
-  font-size:13.5px; color:#cfc9de; max-width:820px; line-height:1.65;
+  background:#1f2135; border:2px solid #2c2e4a; border-radius:14px;
+  margin-top:24px; max-width:820px; width:100%;
+  font-size:13.5px; color:#cfc9de; line-height:1.65;
 }
+.howto > summary {
+  cursor:pointer; list-style:none; padding:14px 20px;
+  font-weight:700; color:#ffb347; display:flex; align-items:center; gap:8px;
+}
+.howto > summary::-webkit-details-marker { display:none; }
+.howto > summary::after { content:'▾'; margin-left:auto; transition:transform .2s ease; }
+.howto[open] > summary::after { transform:rotate(180deg); }
+.howto > summary:hover { color:#ffd08a; }
+.howtobody { padding:0 20px 18px; border-top:1px solid #2c2e4a; }
+.howtobody p { margin-top:14px; }
 .howto b { color:#ffb347; }
-.kbd { background:#34365a; border-radius:5px; padding:1px 7px; font-family:monospace; font-size:12px; color:#fff; }
+
+.keygrid {
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));
+  gap:8px; margin-top:14px;
+}
+.keyrow {
+  background:#12131f; border-radius:10px; padding:8px 12px;
+  display:flex; align-items:center; gap:7px; font-size:12.5px;
+}
+.ktag {
+  background:#34365a; color:#ffb347; font-weight:900; font-size:11px;
+  border-radius:6px; padding:2px 7px; min-width:26px; text-align:center;
+}
+.kbd { background:#34365a; border-radius:5px; padding:2px 7px; font-family:monospace; font-size:12px; color:#fff; }
+
+@media (max-width:600px) { .mcard { width:100%; max-width:340px; } }

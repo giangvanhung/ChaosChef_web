@@ -1,35 +1,91 @@
+/* Token dùng chung. Bản song song cho canvas nằm ở hằng T trong constants.js —
+   sửa màu thì sửa cả hai chỗ. */
+:root {
+  --ink:#12131f; --panel:#1e2036; --panel-2:#23253c; --line:#34365a;
+  --text:#f5f0e8; --dim:#b8b2c8; --faint:#8f89a3;
+
+  --primary:#ff8a3d;  --primary-d:#b23315;
+  --info:#4fc3f7;     --info-d:#1c5f95;
+  --gold:#ffc53d;     --good:#34d399; --bad:#ff5a5f;
+  --p1:#ff4d4d; --p2:#c084fc; --p3:#4fc3f7; --p4:#22c55e;
+
+  --r-sm:10px; --r:14px; --r-lg:18px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px;
+
+  --font-head:'Fredoka','Segoe UI',system-ui,sans-serif;
+  --font-body:'Nunito','Segoe UI',system-ui,sans-serif;
+
+  /* Claymorphism: bóng ngoài mềm + gờ trong sáng */
+  --clay:0 6px 0 rgba(0,0,0,.35), 0 12px 24px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.14);
+  --clay-press:0 2px 0 rgba(0,0,0,.35), 0 4px 10px rgba(0,0,0,.3), inset 0 2px 0 rgba(255,255,255,.1);
+}
+
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
-  background:#12131f; color:#f5f0e8;
-  font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+  /* hai quầng sáng cam/xanh rất mờ ở hai góc trên, cho nền bớt phẳng */
+  background:
+    radial-gradient(700px 420px at 12% -8%, #ff8a3d22, transparent 70%),
+    radial-gradient(680px 400px at 88% -6%, #4fc3f722, transparent 70%),
+    var(--ink);
+  background-attachment:fixed;
+  color:var(--text);
+  font-family:var(--font-body);
   min-height:100vh; display:flex; flex-direction:column; align-items:center;
-  padding:14px; user-select:none;
+  padding:var(--s4); user-select:none;
 }
+h1,h2,h3 { font-family:var(--font-head); }
+/* Đang trong ván: khoá trang lại — không cuộn, không kéo lên xuống.
+   Phóng to (Ctrl +) hay mở F12 chỉ làm khung nhìn nhỏ đi, game tự co lại vừa vặn. */
+html.ingame, body.ingame {
+  height:100%; overflow:hidden;
+  overscroll-behavior:none; touch-action:none;
+}
+body.ingame { position:fixed; inset:0; padding:0; }
+body.ingame #brand { display:none; }
+#brand { text-align:center; margin-bottom:4px; }
 h1.title {
-  font-size:44px; margin:10px 0 2px;
-  background:linear-gradient(90deg,#ffb347,#ff5a5f,#ff8fd6);
+  font-size:clamp(30px, 7vw, 48px); margin:14px 0 4px;
+  background:linear-gradient(90deg,#ffb347,#ff5a5f,#ff8fd6,#ffb347);
+  background-size:200% auto;
   -webkit-background-clip:text; background-clip:text; color:transparent;
-  letter-spacing:1px;
+  letter-spacing:1px; font-weight:700;   /* Fredoka chỉ có tới 700 */
+  animation:titleShine 6s linear infinite;
 }
-.tagline { color:#b8b2c8; margin-bottom:18px; font-style:italic; }
+@keyframes titleShine { to { background-position:200% center; } }
+@media (prefers-reduced-motion:reduce) { h1.title { animation:none; } }
+.tagline { color:#b8b2c8; margin-bottom:18px; font-style:italic; font-size:14px; }
 .screen { display:none; flex-direction:column; align-items:center; width:100%; max-width:900px; }
 .screen.on { display:flex; }
+/* Nút "clay": dày, bo nhiều, lún xuống khi bấm. Cao tối thiểu 44px cho ngón tay. */
 button {
-  background:linear-gradient(180deg,#ff8a3d,#f4552e); color:#fff; border:none;
-  border-radius:12px; padding:11px 20px; font-size:15px; font-weight:700;
-  cursor:pointer; font-family:inherit; box-shadow:0 3px 0 #b23315;
+  --btn:#ff8a3d; --btn-d:#f4552e; --btn-sh:var(--primary-d);
+  background:linear-gradient(180deg,var(--btn),var(--btn-d)); color:#fff;
+  border:none; border-radius:var(--r); min-height:44px; padding:12px 22px;
+  font-size:15px; font-weight:700; font-family:var(--font-head); letter-spacing:.2px;
+  cursor:pointer;
+  box-shadow:0 5px 0 var(--btn-sh), 0 8px 16px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.22);
+  transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
 }
-button:hover { filter:brightness(1.1); }
-button:active { transform:translateY(2px); box-shadow:0 1px 0 #b23315; }
-button.alt { background:linear-gradient(180deg,#4fc3f7,#2f8fd4); box-shadow:0 3px 0 #1c5f95; }
-button.ghost { background:#2a2c48; box-shadow:0 3px 0 #191a30; }
-button.small { padding:7px 12px; font-size:13px; }
+button:hover { filter:brightness(1.08); }
+button:active {
+  transform:translateY(4px);
+  box-shadow:0 1px 0 var(--btn-sh), 0 2px 6px rgba(0,0,0,.3), inset 0 2px 0 rgba(255,255,255,.16);
+}
+button:focus-visible { outline:3px solid var(--gold); outline-offset:3px; }
+button.alt   { --btn:#4fc3f7; --btn-d:#2f8fd4; --btn-sh:var(--info-d); }
+button.ghost { --btn:#33355a; --btn-d:#2a2c48; --btn-sh:#191a30; }
+button.small { min-height:36px; padding:8px 14px; font-size:13px; border-radius:var(--r-sm); }
+@media (prefers-reduced-motion:reduce) { button { transition:none; } }
+
 input[type=text] {
-  background:#12131f; border:2px solid #34365a; color:#fff; border-radius:10px;
-  padding:10px 12px; font-size:15px; width:100%; margin-bottom:10px; text-align:center;
-  font-family:inherit; text-transform:uppercase;
+  background:var(--ink); border:2px solid var(--line); color:#fff; border-radius:var(--r-sm);
+  padding:12px; font-size:16px;   /* 16px: iOS không tự phóng to khi focus */
+  width:100%; margin-bottom:10px; text-align:center;
+  font-family:var(--font-body); font-weight:600; text-transform:uppercase;
+  min-height:44px; transition:border-color .15s ease, box-shadow .15s ease;
 }
+input[type=text]::placeholder { color:#5c5875; letter-spacing:normal; font-weight:400; }
 input.name { text-transform:none; }
-.btnrow { display:flex; gap:12px; margin-top:18px; flex-wrap:wrap; justify-content:center; }
-.err { color:#ff7676; min-height:20px; font-size:13px; }
-.waiting { color:#8f89a3; font-style:italic; }
+.btnrow { display:flex; gap:var(--s3); margin-top:var(--s5); flex-wrap:wrap; justify-content:center; }
+.err { color:#ff8a8a; min-height:20px; font-size:13px; font-weight:600; }
+.waiting { color:var(--faint); font-style:italic; }

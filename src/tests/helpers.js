@@ -10,7 +10,9 @@ async function gotoMenu(page) {
 
 async function startLocalGame(page, n) {
   await gotoMenu(page);
-  await page.click(`#localCount .pill[data-n="${n}"]`);
+  // Trên thiết bị cảm ứng ô chọn số người bị ẩn (ép 1 người) — bỏ qua bước bấm.
+  const pill = page.locator(`#localCount .pill[data-n="${n}"]`);
+  if (await pill.isVisible()) await pill.click();
   await page.click('button:has-text("Vào bếp ngay!")');
   await page.waitForSelector('#gamewrap.on');
 }
