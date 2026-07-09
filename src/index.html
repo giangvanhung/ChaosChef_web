@@ -4,6 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chaos Chef 🍳 — Hợp tác, hoảng loạn, cười tím mặt</title>
+<!-- Đặt màu sáng/tối SỚM, ngay trong <head> trước cả CSS, để không bị nháy sai
+     màu lúc tải. Mặc định theo cài đặt hệ thống, có nhớ lựa chọn của người dùng. -->
+<script>
+(function(){
+  var KEY='chaoschef_theme', saved=null;
+  try{ saved=localStorage.getItem(KEY); }catch(e){}
+  var sys=(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';
+  var theme=(saved==='light'||saved==='dark')?saved:sys;
+  window.applyTheme=function(t){
+    document.documentElement.setAttribute('data-theme',t);
+    var m=document.querySelector('meta[name=theme-color]'); if(m) m.setAttribute('content', t==='light'?'#eceaf2':'#12131f');
+    var b=document.getElementById('themeBtn'); if(b) b.textContent=(t==='light')?'🌙':'☀️';
+  };
+  window.toggleTheme=function(){
+    var cur=(document.documentElement.getAttribute('data-theme')==='light')?'light':'dark';
+    var nx=(cur==='light')?'dark':'light';
+    try{ localStorage.setItem(KEY,nx); }catch(e){}
+    window.applyTheme(nx);
+  };
+  window.applyTheme(theme);
+  document.addEventListener('DOMContentLoaded',function(){ window.applyTheme(document.documentElement.getAttribute('data-theme')); });
+})();
+</script>
 <!-- SVG cho trình duyệt hiện đại (nét ở mọi cỡ), PNG/ICO cho Safari cũ và tab pinned -->
 <link rel="icon" type="image/svg+xml" href="./static/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="./static/favicon-32.png">
@@ -22,6 +45,8 @@
 <link rel="stylesheet" href="./static/css/endscreen.css">
 </head>
 <body>
+
+<button id="themeBtn" class="ghost small" onclick="toggleTheme()" title="Đổi màu sáng / tối" aria-label="Đổi màu sáng tối">☀️</button>
 
 <header id="brand">
   <h1 class="title">CHAOS CHEF 🍳</h1>
@@ -120,6 +145,9 @@
         <button class="mbtn mdown" data-k="down">▼</button>
         <button class="mbtn mright" data-k="right">▶</button>
       </div>
+      <div id="mjoy" class="mjoy">
+        <div class="mjoy-base"><div class="mjoy-knob"></div></div>
+      </div>
       <div class="mactions">
         <button class="mbtn mthr" data-k="thr">🤾</button>
         <button class="mbtn mact" data-k="act">✋</button>
@@ -132,6 +160,14 @@
   <div id="optionsPanel">
     <div class="optcard">
       <h3 id="optTitle">⚙️ Tuỳ chọn</h3>
+
+      <div class="optsize">
+        <label>🎮 Kiểu điều khiển</label>
+        <div id="ctrlStyle" class="segmented">
+          <button data-style="pad" onclick="setControlStyle('pad')">✚ Nút D-pad</button>
+          <button data-style="joy" onclick="setControlStyle('joy')">🕹️ Joystick</button>
+        </div>
+      </div>
 
       <div class="optsize">
         <label for="mszRange">🕹️ Cỡ joystick &amp; nút — <b id="mszVal">54</b>px</label>

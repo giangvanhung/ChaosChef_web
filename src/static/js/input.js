@@ -54,6 +54,89 @@ function bindTouchBtn(btn, code){
 }
 document.querySelectorAll('#mobileControls .mbtn').forEach(btn => bindTouchBtn(btn, MOBILE_KEYS[btn.dataset.k]));
 
+// ---------- Joystick analog ----------
+// Kéo núm theo ngón cái → quy đổi ra 8 hướng phím WASD (giống D-pad nhưng mượt
+// và đi được cả hướng chéo). Vẫn chỉ set/clear đúng bộ phím P1 nên tương thích
+// host / chơi chung / online client y như nút thường.
+(function initJoystick(){
+  const joy = el('mjoy'); if (!joy) return;
+  const base = joy.querySelector('.mjoy-base');
+  const knob = joy.querySelector('.mjoy-knob');
+  const MOVE = { u:'KeyW', l:'KeyA', d:'KeyS', r:'KeyD' };
+  const DEAD = 0.28;            // vùng chết ở giữa (bỏ qua rung tay nhỏ)
+  const DIAG = 0.383;           // sin(22.5°) → chia đều 8 hướng
+  let pid = null;               // id ngón đang giữ joystick
+
+  const setKey = (code, on) => { on ? keys.add(code) : keys.delete(code); };
+  function apply(nx, ny, mag){  // nx,ny: vector đơn vị; mag: độ lớn 0..1
+    const on = mag >= DEAD;
+    setKey(MOVE.u, on && ny < -DIAG);
+    setKey(MOVE.d, on && ny >  DIAG);
+    setKey(MOVE.l, on && nx < -DIAG);
+    setKey(MOVE.r, on && nx >  DIAG);
+    clientSendInput();
+  }
+  function moveKnob(dx, dy){ knob.style.transform = `translate(${dx}px,${dy}px)`; }
+  function reset(){
+    joy.classList.remove('dragging'); moveKnob(0, 0);
+    setKey(MOVE.u,false); setKey(MOVE.l,false); setKey(MOVE.d,false); setKey(MOVE.r,false);
+    clientSendInput();
+  }
+  function handle(clientX, clientY){
+    const r = base.getBoundingClientRect();
+    const cx = r.left + r.width/2, cy = r.top + r.height/2;
+    const maxR = r.width/2;
+    let dx = clientX - cx, dy = clientY - cy;
+    const dist = Math.hypot(dx, dy) || 1;
+    const clamped = Math.min(dist, maxR);
+    const nx = dx/dist, ny = dy/dist;
+    moveKnob(nx*clamped, ny*clamped);
+    apply(nx, ny, clamped/maxR);
+  }
+
+  // Touch (di động) — bám theo 1 ngón bằng identifier để chơi được đa chạm
+  base.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.changedTouches[0]; pid = t.identifier;
+    joy.classList.add('dragging'); handle(t.clientX, t.clientY);
+  }, {passive:false});
+  joy.addEventListener('touchmove', e => {
+    if (pid === null) return;
+    for (const t of e.changedTouches) if (t.identifier === pid){ e.preventDefault(); handle(t.clientX, t.clientY); }
+  }, {passive:false});
+  const endTouch = e => {
+    if (pid === null) return;
+    for (const t of e.changedTouches) if (t.identifier === pid){ e.preventDefault(); pid = null; reset(); }
+  };
+  joy.addEventListener('touchend', endTouch, {passive:false});
+  joy.addEventListener('touchcancel', endTouch, {passive:false});
+
+  // Chuột (test trên máy tính)
+  base.addEventListener('mousedown', e => {
+    e.preventDefault(); pid = 'mouse'; joy.classList.add('dragging'); handle(e.clientX, e.clientY);
+    const mm = ev => handle(ev.clientX, ev.clientY);
+    const mu = () => { pid = null; reset(); window.removeEventListener('mousemove', mm); window.removeEventListener('mouseup', mu); };
+    window.addEventListener('mousemove', mm); window.addEventListener('mouseup', mu);
+  });
+})();
+
+// ---------- Chọn kiểu điều khiển: D-pad ✚ hoặc joystick 🕹️ ----------
+const CTRL_KEY = 'chaoschef_ctrl_style';
+function setControlStyle(style){
+  const joy = style === 'joy';
+  el('mobileControls').classList.toggle('joy', joy);
+  document.querySelectorAll('#ctrlStyle button').forEach(b =>
+    b.classList.toggle('sel', b.dataset.style === style));
+  keys.delete('KeyW'); keys.delete('KeyA'); keys.delete('KeyS'); keys.delete('KeyD');
+  clientSendInput();
+  try { localStorage.setItem(CTRL_KEY, style); } catch(e){}
+}
+(function initControlStyle(){
+  let saved = null;
+  try { saved = localStorage.getItem(CTRL_KEY); } catch(e){}
+  setControlStyle(saved === 'joy' ? 'joy' : 'pad');
+})();
+
 // Máy cảm ứng, HOẶC màn hình kiểu điện thoại (kể cả trình duyệt mobile báo
 // maxTouchPoints = 0) → tự bật sẵn nút cảm ứng.
 const isTouchDevice = () =>

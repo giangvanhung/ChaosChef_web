@@ -15,6 +15,35 @@
 .mpad .mleft  { grid-area:left; }
 .mpad .mdown  { grid-area:down; }
 .mpad .mright { grid-area:right; }
+/* --- Joystick analog (kéo bằng ngón cái) --- */
+.mjoy { display:none; pointer-events:auto; touch-action:none; }
+.mjoy-base {
+  --jr:calc(var(--msz) * 2.4);
+  position:relative; width:var(--jr); height:var(--jr); border-radius:50%;
+  background:radial-gradient(circle, #2a2c48cc 60%, #1c1d33cc 100%);
+  border:2px solid #4fc3f7aa; box-shadow:0 3px 0 #191a30, inset 0 0 12px #0006;
+  touch-action:none; user-select:none; -webkit-tap-highlight-color:transparent;
+}
+.mjoy-knob {
+  position:absolute; left:50%; top:50%; width:50%; height:50%;
+  margin:-25% 0 0 -25%; border-radius:50%;
+  background:radial-gradient(circle at 40% 35%, #ffb347, #f4552e);
+  border:2px solid #fff8; box-shadow:0 2px 6px #000a;
+  transform:translate(0,0); transition:transform .05s linear; will-change:transform;
+}
+.mjoy.dragging .mjoy-knob { transition:none; }
+/* Chọn kiểu: joystick thì ẩn D-pad, hiện joystick */
+#mobileControls.joy .mpad { display:none; }
+#mobileControls.joy .mjoy { display:block; }
+
+/* Nút chọn kiểu điều khiển trong panel tuỳ chọn */
+.segmented { display:flex; gap:6px; margin-top:4px; }
+.segmented button {
+  flex:1; padding:8px 6px; border-radius:8px; cursor:pointer;
+  background:#2a2c48; border:2px solid #4fc3f755; color:#cfe8ff; font-size:14px;
+}
+.segmented button.sel { background:#f4552e; border-color:#ffb347; color:#fff; }
+
 .mactions { display:flex; gap:var(--mgap); align-items:flex-end; pointer-events:auto; }
 .mbtn {
   width:var(--msz); height:var(--msz); border-radius:50%; padding:0;
@@ -28,5 +57,17 @@
 }
 .mactions .mthr { background:#4fc3f7cc; }
 .mactions .mact { width:calc(var(--msz) + 12px); height:calc(var(--msz) + 12px); font-size:26px; background:#ff8a3dcc; }
+/* Nút hơi trong suốt để nhìn xuyên qua thấy sàn bếp; đang bấm/kéo thì rõ hẳn */
+.mpad, .mjoy, .mactions { opacity:.72; transition:opacity .15s; }
+.mjoy.dragging, .mactions:active { opacity:1; }
+.mbtn.active, .mbtn:active { opacity:1; }
+
 @media (max-width:480px)      { #mobileControls { --msz:40px; --mgap:4px; } .mbtn { font-size:15px; } .mactions .mact { font-size:19px; } }
 @media (max-height:480px)     { #mobileControls { --msz:38px; --mgap:4px; } }
+/* Điện thoại xoay ngang (thấp & rộng): nút dễ che hết tầm nhìn → thu nhỏ, dồn
+   sát 2 góc đáy và trong suốt hơn để chừa khoảng giữa cho sàn bếp. */
+@media (orientation:landscape) and (max-height:540px){
+  #mobileControls { --msz:34px; --mgap:3px; bottom:3px; padding:0 4px; align-items:flex-end; }
+  .mpad, .mjoy, .mactions { opacity:.6; }
+  .mactions .mact { width:calc(var(--msz) + 8px); height:calc(var(--msz) + 8px); }
+}

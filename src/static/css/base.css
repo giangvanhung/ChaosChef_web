@@ -20,6 +20,40 @@
   --clay-press:0 2px 0 rgba(0,0,0,.35), 0 4px 10px rgba(0,0,0,.3), inset 0 2px 0 rgba(255,255,255,.1);
 }
 
+/* ---------- Chế độ SÁNG ---------- */
+/* Chỉ đảo các màu nền/chữ; giữ nguyên màu nhấn (cam/xanh/vàng, màu nhân vật) để
+   hai giao diện vẫn cùng một "chất". Lớp phủ trong ván (canvas, nút cảm ứng) cố
+   tình để tối vì nó nằm trên nền game tối. */
+:root[data-theme="light"] {
+  --ink:#eceaf2; --panel:#ffffff; --panel-2:#f5f2fa; --line:#d7d2e2;
+  --text:#20212e; --dim:#59556b; --faint:#7c7790;
+  --info-d:#2f7fb8;
+}
+:root[data-theme="light"] body {
+  background:
+    radial-gradient(700px 420px at 12% -8%, #ff8a3d18, transparent 70%),
+    radial-gradient(680px 400px at 88% -6%, #4fc3f718, transparent 70%),
+    var(--ink);
+}
+:root[data-theme="light"] button.ghost { --btn:#e7e3f0; --btn-d:#d5d0e2; --btn-sh:#b8b2c8; color:var(--text); }
+:root[data-theme="light"] .kbd,
+:root[data-theme="light"] input[type=text] { color:var(--text); }
+/* Chữ vàng/hổ phách sáng vốn hợp nền tối; trên nền sáng thì làm đậm lại cho đọc rõ */
+:root[data-theme="light"] .howto > summary,
+:root[data-theme="light"] .howto > summary:hover,
+:root[data-theme="light"] .howto b { color:#c9791a; }
+:root[data-theme="light"] #lobbyCode,
+:root[data-theme="light"] .rtitle,
+:root[data-theme="light"] #endMoney { color:#c0850f; }
+
+/* Nút đổi sáng/tối — góc trên phải, ẩn khi đang trong ván (nhường nút ⚙️) */
+#themeBtn {
+  position:fixed; top:12px; right:12px; z-index:60;
+  width:44px; height:44px; padding:0; font-size:20px; line-height:1;
+  border-radius:50%; min-height:0;
+}
+body.ingame #themeBtn { display:none; }
+
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
   /* hai quầng sáng cam/xanh rất mờ ở hai góc trên, cho nền bớt phẳng */
@@ -53,7 +87,7 @@ h1.title {
 }
 @keyframes titleShine { to { background-position:200% center; } }
 @media (prefers-reduced-motion:reduce) { h1.title { animation:none; } }
-.tagline { color:#b8b2c8; margin-bottom:18px; font-style:italic; font-size:14px; }
+.tagline { color:var(--dim); margin-bottom:18px; font-style:italic; font-size:14px; }
 .screen { display:none; flex-direction:column; align-items:center; width:100%; max-width:900px; }
 .screen.on { display:flex; }
 /* Nút "clay": dày, bo nhiều, lún xuống khi bấm. Cao tối thiểu 44px cho ngón tay. */
@@ -78,7 +112,7 @@ button.small { min-height:36px; padding:8px 14px; font-size:13px; border-radius:
 @media (prefers-reduced-motion:reduce) { button { transition:none; } }
 
 input[type=text] {
-  background:var(--ink); border:2px solid var(--line); color:#fff; border-radius:var(--r-sm);
+  background:var(--ink); border:2px solid var(--line); color:var(--text); border-radius:var(--r-sm);
   padding:12px; font-size:16px;   /* 16px: iOS không tự phóng to khi focus */
   width:100%; margin-bottom:10px; text-align:center;
   font-family:var(--font-body); font-weight:600; text-transform:uppercase;

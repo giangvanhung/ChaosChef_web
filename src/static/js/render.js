@@ -53,10 +53,12 @@ function bar(c,x,y,w,h,frac,col){
 }
 
 // ---------- Sàn bếp: dựng sẵn một lần, mỗi khung hình chỉ vẽ lại như một ảnh ----------
+const FS = 2;   // sàn dựng gấp đôi độ phân giải → phóng to full màn hình vẫn nét
 const floorCv = document.createElement('canvas');
-floorCv.width = W; floorCv.height = GRID_H*TILE;
+floorCv.width = W*FS; floorCv.height = GRID_H*TILE*FS;
 (function buildFloor(){
   const f = floorCv.getContext('2d');
+  f.scale(FS,FS);
   for (let gx=1; gx<GRID_W-1; gx++) for (let gy=1; gy<GRID_H-1; gy++){
     f.fillStyle = (gx+gy)%2 ? T.floorA : T.floorB;
     f.fillRect(gx*TILE, gy*TILE, TILE, TILE);
@@ -78,7 +80,19 @@ floorCv.width = W; floorCv.height = GRID_H*TILE;
   f.fillStyle=sh; f.fillRect(TILE,TILE,W-TILE*2,14);
 })();
 
+// Chỉnh độ phân giải thật của canvas theo cỡ hiển thị × devicePixelRatio, để
+// full màn hình trên PC không bị phóng to mờ. Chỉ đổi khi cỡ thay đổi (đổi cỡ
+// backing store sẽ xoá canvas) nên không tốn gì mỗi khung hình.
+function fitCanvas(){
+  const dpr = window.devicePixelRatio || 1;
+  const r = cv.getBoundingClientRect();
+  const bw = Math.round(r.width*dpr), bh = Math.round(r.height*dpr);
+  if (bw && bh && (cv.width!==bw || cv.height!==bh)){ cv.width=bw; cv.height=bh; }
+}
 function draw(v){
+  fitCanvas();
+  // Quy đổi toạ độ logic 832×662 → độ phân giải backing thật (mọi hàm vẽ giữ nguyên)
+  ctx.setTransform(cv.width/W, 0, 0, cv.height/H, 0, 0);
   ctx.fillStyle=T.ink; ctx.fillRect(0,0,W,H);
   drawWorld(v);
   if (v.blackout>0) drawDark(v);
@@ -89,7 +103,7 @@ function draw(v){
 
 function drawWorld(v){
   ctx.save(); ctx.translate(0,HUD_H);
-  ctx.drawImage(floorCv,0,0);
+  ctx.drawImage(floorCv,0,0,W,GRID_H*TILE);
   for (let i=0;i<STATIONS.length;i++) drawStation(STATIONS[i], i, v);
   if (v.slip>0){                                   // 🧼 sàn trơn lấp lánh
     ctx.globalAlpha=.5;

@@ -58,6 +58,56 @@ test.describe('thiết bị cảm ứng (điện thoại)', () => {
     expect(a2).toBeCloseTo(a1, 1);         // đã đứng hẳn sau khi nhả
   });
 
+  test('joystick: chọn kiểu 🕹️ thì ẩn D-pad; kéo núm sang phải là chạy phải, nhả thì dừng', async ({ page }) => {
+    await startLocalGame(page, 1);
+    await page.click('#optbtn');
+    await page.click('#ctrlStyle button[data-style="joy"]');
+    await page.click('#optbtn');                       // đóng bảng, chạy tiếp
+
+    await expect(page.locator('.mpad')).toBeHidden();
+    await expect(page.locator('#mjoy')).toBeVisible();
+
+    const before = await page.evaluate(() => G.players[0].x);
+
+    // Kéo núm hết cỡ sang phải (mô phỏng ngón cái): touchstart giữa đế → touchmove lệch phải
+    await page.evaluate(() => {
+      const base = document.querySelector('.mjoy-base');
+      const joy = document.getElementById('mjoy');
+      const r = base.getBoundingClientRect();
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      const mk = (x, y) => new Touch({ identifier: 1, target: base, clientX: x, clientY: y });
+      base.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, cancelable: true, changedTouches: [mk(cx, cy)], touches: [mk(cx, cy)] }));
+      const far = mk(cx + r.width, cy);
+      joy.dispatchEvent(new TouchEvent('touchmove', { bubbles: true, cancelable: true, changedTouches: [far], touches: [far] }));
+    });
+    await page.waitForTimeout(400);
+    const mid = await page.evaluate(() => G.players[0].x);
+
+    await page.evaluate(() => {
+      const joy = document.getElementById('mjoy');
+      const t = new Touch({ identifier: 1, target: joy, clientX: 0, clientY: 0 });
+      joy.dispatchEvent(new TouchEvent('touchend', { bubbles: true, cancelable: true, changedTouches: [t], touches: [] }));
+    });
+    await page.waitForTimeout(150);
+    const a1 = await page.evaluate(() => G.players[0].x);
+    await page.waitForTimeout(150);
+    const a2 = await page.evaluate(() => G.players[0].x);
+
+    expect(mid).toBeGreaterThan(before);   // kéo phải → chạy phải
+    expect(a2).toBeCloseTo(a1, 1);         // nhả núm → đứng hẳn
+  });
+
+  test('joystick: kiểu điều khiển được nhớ lại sau khi tải lại trang', async ({ page }) => {
+    await startLocalGame(page, 1);
+    await page.click('#optbtn');
+    await page.click('#ctrlStyle button[data-style="joy"]');
+
+    await startLocalGame(page, 1);         // tải lại
+    await expect(page.locator('#mobileControls')).toHaveClass(/joy/);
+    await expect(page.locator('#mjoy')).toBeVisible();
+    await expect(page.locator('.mpad')).toBeHidden();
+  });
+
   test('nút ✋ (hành động): đứng cạnh thùng nguyên liệu thì nhặt được đồ', async ({ page }) => {
     await startLocalGame(page, 1);
     await page.evaluate(() => {
