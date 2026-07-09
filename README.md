@@ -29,7 +29,16 @@ Cần có mạng, vì trang tải PeerJS (thư viện WebRTC) và font Fredoka/N
 
 Chung cho mọi chế độ: phím `1`–`4` bắn emote ("NHANH LÊN!! 😡", "LỖI TẠI MÀY 👉"...), phím `Esc` mở bảng ⚙️ Tuỳ chọn.
 
-**📱 Trên điện thoại** nút cảm ứng tự hiện; cỡ joystick chỉnh được trong bảng ⚙️ và được nhớ lại cho lần sau. Điện thoại **chỉ chơi 1 người** ở chế độ chung máy — chỉ có một bộ nút cảm ứng nên P2–P4 sẽ đứng chôn chân. Muốn chơi cùng bạn thì mỗi người một máy qua phòng online.
+**🌗 Sáng / tối** — nút ☀️/🌙 góc trên phải đổi giao diện sáng-tối. Mặc định chạy theo cài đặt hệ thống, và nhớ lựa chọn của bạn cho lần sau. Nút này ẩn đi khi vào ván (nhường chỗ cho ⚙️).
+
+**📱 Trên điện thoại** nút cảm ứng tự hiện. Bảng ⚙️ cho chọn **kiểu điều khiển**:
+
+- **✚ Nút D-pad** — bốn nút hướng rời, bấm chính xác.
+- **🕹️ Joystick** — cần analog: đặt ngón cái xuống rồi rê để đi 8 hướng.
+
+Cỡ nút/joystick chỉnh được trong bảng ⚙️; cả kiểu điều khiển lẫn cỡ đều được nhớ cho lần sau. Khi **xoay ngang** máy, nút cảm ứng mờ bớt và co lại về hai góc để không che tầm nhìn, đậm rõ trở lại lúc bạn chạm vào.
+
+Điện thoại **chỉ chơi 1 người** ở chế độ chung máy — chỉ có một bộ nút cảm ứng nên P2–P4 sẽ đứng chôn chân. Muốn chơi cùng bạn thì mỗi người một máy qua phòng online.
 
 Máy tính bảng hoặc laptop cảm ứng **có cắm bàn phím rời** thì mở trang bằng `index.html?keyboard=1` để lấy lại chế độ 2–4 người. Trình duyệt không có cách nào tự biết bạn có bàn phím thật hay không, nên phải nói cho nó biết.
 
@@ -98,7 +107,7 @@ src/
     gameplay.js         mô phỏng: người chơi, trạm, đơn hàng, sự cố, tính điểm
     render.js           vẽ canvas (HUD, bếp, nhân vật) + phát âm thanh theo diff giữa 2 view
     network.js          PeerJS: tạo/vào phòng, đồng bộ input và view giữa host/client
-    input.js            bàn phím, nút cảm ứng, chỉnh cỡ joystick
+    input.js            bàn phím, nút D-pad, cần analog, chọn kiểu điều khiển + cỡ nút
     ui.js               chuyển màn hình, bảng tuỳ chọn, quay clip, vòng lặp chính
     audio.js            hiệu ứng âm thanh sinh bằng WebAudio, không cần file nhạc
     dom.js              tiện ích DOM
@@ -111,7 +120,9 @@ Mô phỏng chạy bằng `setInterval` chứ **không** dùng `requestAnimation
 
 Chỉnh độ khó bằng các hằng số ở đầu `constants.js`: `COOK_TIME`, `BURN_AFTER`, `LEVELS`, `RECIPES`.
 
-Màu sắc có **hai bản song song phải sửa cùng lúc**: biến CSS trong `static/css/base.css` cho giao diện DOM, và hằng `T` / `ST_CLAY` trong `constants.js` cho canvas — vì canvas không đọc được biến CSS.
+Màu sắc có **hai bản song song phải sửa cùng lúc**: biến CSS trong `static/css/base.css` cho giao diện DOM, và hằng `T` / `ST_CLAY` trong `constants.js` cho canvas — vì canvas không đọc được biến CSS. Giao diện sáng/tối chỉ đảo màu nền/chữ của phần DOM (biến CSS + `[data-theme="light"]`); lớp canvas trong ván cố tình giữ tối vì nó nằm trên nền game tối.
+
+Canvas vẽ theo `devicePixelRatio`: `fitCanvas()` trong `render.js` đặt kích thước bộ đệm bằng cỡ CSS × DPR nên nét căng khi phóng to hoặc full màn hình, thay vì mờ như khi kéo dãn một ảnh 832×662 cố định.
 
 ## Chạy test
 
